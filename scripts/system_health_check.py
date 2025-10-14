@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+"""System Health Check Script for Product Dashboard Builder v2.
+Version: 2.1.0
+Last Updated: 2025-10-14
+
+Changelog:
+- v2.1.0 (2025-10-14): Enhanced with merged Phase 1 improvements
+- v2.0.0 (2025-10-14): Added dataclass structure and improved validation
+- v1.0.0 (2025-10-14): Initial version
+
+Environment Variables:
+- RUN_HASH: Unique identifier for the current run
+- DATASET_NAME: BigQuery dataset name
+- GOOGLE_CLOUD_PROJECT: Google Cloud project ID
+- GOOGLE_APPLICATION_CREDENTIALS: Path to service account credentials
+
+Dependencies:
+- google-cloud-bigquery: BigQuery client library
+- google-oauth2: OAuth2 authentication
+"""
+
+#!/usr/bin/env python3
 """System Health Check Script for Product Dashboard Builder v2."""
 import os
 import sys
