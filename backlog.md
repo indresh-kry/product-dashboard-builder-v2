@@ -2,6 +2,9 @@
 
 This document tracks future improvements and enhancements for the analysis workflow system.
 
+## Critical items 
+- [ ] **Create spec for project
+
 ## High Priority Items
 
 ### 1. Workflow Modes Implementation
