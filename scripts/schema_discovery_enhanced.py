@@ -21,16 +21,48 @@ Environment Variables:
 """
 import os
 import json
+import re
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, Iterable, List, Optional, Tuple
+
 import pandas as pd
-from datetime import datetime, timedelta
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+try:
+    from scripts import rules_engine_integration
+except ImportError:  # pragma: no cover - optional dependency during bootstrap
+    rules_engine_integration = None
+
 def get_bigquery_client():
-    """Initialize BigQuery client with credentials"""
-    credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
-    
+    """Initialize BigQuery client with credentials and safe fallbacks."""
+    credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    dataset_name = os.environ.get("DATASET_NAME")
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+
+    if not credentials_path:
+        raise EnvironmentError(
+            "GOOGLE_APPLICATION_CREDENTIALS not set. "
+            "Run Phase 0 bootstrap or supply credentials path."
+        )
+
+    if not os.path.exists(credentials_path):
+        raise FileNotFoundError(
+            f"Credentials file '{credentials_path}' not found. "
+            "Check your Phase 0 setup."
+        )
+
+    if not project_id:
+        inferred = infer_project_from_dataset(dataset_name)
+        if inferred:
+            project_id = inferred
+            os.environ.setdefault("GOOGLE_CLOUD_PROJECT", inferred)
+        else:
+            raise EnvironmentError(
+                "GOOGLE_CLOUD_PROJECT not set and could not infer from DATASET_NAME."
+            )
+
     credentials = service_account.Credentials.from_service_account_file(credentials_path)
     client = bigquery.Client(credentials=credentials, project=project_id)
     return client
@@ -121,14 +153,28 @@ def build_where_clause(app_filter, date_start, date_end):
     conditions = []
     
     if app_filter and app_filter.strip():
-        conditions.append(f"app_longname = '{app_filter}'")
-        print(f"🎯 App Filter: {app_filter}")
+        safe_app = sanitize_filter_value(app_filter, "APP_FILTER")
+        conditions.append(f"app_longname = '{safe_app}'")
+        print(f"🎯 App Filter: {safe_app}")
     else:
         print("🎯 App Filter: None (analyzing all apps)")
     
-    if date_start and date_end and date_start.strip() and date_end.strip():
-        conditions.append(f"DATE(adjusted_timestamp) BETWEEN '{date_start}' AND '{date_end}'")
-        print(f"📅 Date Range: {date_start} to {date_end}")
+    safe_start = validate_date(date_start, "DATE_START") if date_start else ""
+    safe_end = validate_date(date_end, "DATE_END") if date_end else ""
+
+    if safe_start and safe_end:
+        if safe_start > safe_end:
+            raise ValueError("DATE_START cannot be later than DATE_END.")
+        conditions.append(
+            f"DATE(adjusted_timestamp) BETWEEN '{safe_start}' AND '{safe_end}'"
+        )
+        print(f"📅 Date Range: {safe_start} to {safe_end}")
+    elif safe_start:
+        conditions.append(f"DATE(adjusted_timestamp) >= '{safe_start}'")
+        print(f"📅 Date Range: from {safe_start}")
+    elif safe_end:
+        conditions.append(f"DATE(adjusted_timestamp) <= '{safe_end}'")
+        print(f"📅 Date Range: until {safe_end}")
     else:
         print("📅 Date Range: None (analyzing all available dates)")
     
@@ -307,237 +353,495 @@ def assess_data_quality(client, dataset_name, sample_df):
     print(f"✅ Assessed data quality for {len(quality_metrics)} columns")
     return quality_metrics
 
-def create_schema_mapping(schema_info, user_candidates, revenue_columns, event_taxonomy_df, quality_metrics, available_apps_df, date_range_df):
-    """Create the master schema mapping"""
+def create_schema_mapping(
+    schema_info: List[Dict[str, object]],
+    user_candidates: List[Dict[str, object]],
+    revenue_columns: List[Dict[str, object]],
+    event_taxonomy_records: List[Dict[str, object]],
+    quality_metrics: Dict[str, Dict[str, object]],
+    available_apps_df: Optional[pd.DataFrame],
+    date_range_df: Optional[pd.DataFrame],
+    filters: Dict[str, str],
+    user_rules: Dict[str, object],
+    iap_schema: Dict[str, object],
+    admon_schema: Dict[str, object],
+) -> Dict[str, object]:
+    """Create the master schema mapping with enriched metadata."""
     print("📝 Creating master schema mapping...")
-    
-    # Determine best user ID column
-    best_user_column = user_candidates[0]['column_name'] if user_candidates else 'custom_user_id'
-    
-    # Determine revenue columns
-    revenue_col = None
-    revenue_validation_col = None
-    revenue_currency_col = None
-    
-    for col in revenue_columns:
-        if 'converted_revenue' in col['column_name'].lower():
-            revenue_col = col['column_name']
-        elif 'is_revenue' in col['column_name'].lower():
-            revenue_validation_col = col['column_name']
-        elif 'currency' in col['column_name'].lower():
-            revenue_currency_col = col['column_name']
-    
-    # Get filter information
-    app_filter = os.environ.get('APP_FILTER', '').strip()
-    date_start = os.environ.get('DATE_START', '').strip()
-    date_end = os.environ.get('DATE_END', '').strip()
-    
-    # Calculate data quality score
+
+    best_user_column = (
+        user_candidates[0]["column_name"] if user_candidates else user_rules["hierarchy"][0]["field"]
+    )
+
     if quality_metrics:
-        data_quality_score = round(100 - sum(q['null_percentage'] for q in quality_metrics.values()) / len(quality_metrics), 2)
+        avg_null = sum(q["null_percentage"] for q in quality_metrics.values()) / len(quality_metrics)
+        data_quality_score = round(max(0, 100 - avg_null), 2)
     else:
-        data_quality_score = 0
-    
-    # Prepare available apps data for JSON serialization
-    available_apps_data = []
+        data_quality_score = 0.0
+
+    available_apps_data: List[Dict[str, object]] = []
     if available_apps_df is not None and len(available_apps_df) > 0:
-        available_apps_data = available_apps_df.to_dict('records')
-    
-    # Prepare date range data for JSON serialization
-    date_range_data = {}
+        available_apps_data = available_apps_df.to_dict("records")
+
+    date_range_data: Dict[str, object] = {}
     if date_range_df is not None and len(date_range_df) > 0:
-        date_range_data = date_range_df.to_dict('records')[0]
-    
+        date_range_data = date_range_df.to_dict("records")[0]
+
+    category_breakdown: Dict[str, int] = {}
+    for record in event_taxonomy_records:
+        category = record.get("category", "uncategorized")
+        category_breakdown[category] = category_breakdown.get(category, 0) + 1
+
     schema_mapping = {
-        'version': '1.0',
-        'run_hash': os.environ.get('RUN_HASH'),
-        'generated_at': datetime.now().isoformat(),
-        'table': os.environ.get('DATASET_NAME'),
-        'filters': {
-            'app_filter': app_filter if app_filter else 'ALL_APPS',
-            'date_start': date_start if date_start else 'ALL_DATES',
-            'date_end': date_end if date_end else 'ALL_DATES'
+        "version": "1.0",
+        "run_hash": os.environ.get("RUN_HASH"),
+        "generated_at": datetime.now().isoformat(),
+        "table": os.environ.get("DATASET_NAME"),
+        "filters": {
+            "app_filter": filters.get("app_filter") or "ALL_APPS",
+            "date_start": filters.get("date_start") or "ALL_DATES",
+            "date_end": filters.get("date_end") or "ALL_DATES",
         },
-        'data_quality_score': data_quality_score,
-        'user_identification': {
-            'primary_field': best_user_column,
-            'candidates': user_candidates,
-            'rules': {
-                'use_primary': f"Use {best_user_column} for user identification",
-                'fallback': "Use device_id if primary field is null"
-            }
+        "data_quality_score": data_quality_score,
+        "user_identification": {
+            "primary_field": best_user_column,
+            "candidates": user_candidates,
+            "rules": user_rules,
         },
-        'revenue_calculation': {
-            'revenue_field': revenue_col or 'converted_revenue',
-            'validation_field': revenue_validation_col or 'is_revenue_valid',
-            'currency_field': revenue_currency_col or 'converted_currency',
-            'columns_analyzed': revenue_columns
+        "revenue_calculation": {
+            "columns_analyzed": revenue_columns,
+            "iap": iap_schema,
+            "admon": admon_schema,
         },
-        'event_taxonomy': {
-            'total_events': len(event_taxonomy_df) if event_taxonomy_df is not None else 0,
-            'sample_events': event_taxonomy_df['event_name'].head(10).tolist() if event_taxonomy_df is not None else []
+        "event_taxonomy": {
+            "total_events": len(event_taxonomy_records),
+            "category_breakdown": category_breakdown,
+            "top_events": [rec["event_name"] for rec in event_taxonomy_records[:10]],
         },
-        'data_quality': quality_metrics,
-        'schema_info': schema_info,
-        'available_apps': available_apps_data,
-        'available_date_range': date_range_data
+        "data_quality": quality_metrics,
+        "schema_info": schema_info,
+        "available_apps": available_apps_data,
+        "available_date_range": date_range_data,
     }
-    
+
     print("✅ Master schema mapping created")
     return schema_mapping
 
-def main():
-    """Main schema discovery function"""
+def main() -> int:
+    """Main schema discovery function."""
     print("🚀 Starting Enhanced Schema Discovery for Product Dashboard Builder v2")
     print("=" * 80)
-    
-    # Get environment variables
-    run_hash = os.environ.get('RUN_HASH')
-    dataset_name = os.environ.get('DATASET_NAME')
-    app_filter = os.environ.get('APP_FILTER', '').strip()
-    date_start = os.environ.get('DATE_START', '').strip()
-    date_end = os.environ.get('DATE_END', '').strip()
-    outputs_dir = f'run_logs/{run_hash}/outputs/schema'
-    
+
+    run_hash = os.environ.get("RUN_HASH")
+    dataset_name = os.environ.get("DATASET_NAME")
+
+    if not run_hash or not dataset_name:
+        print("❌ RUN_HASH and DATASET_NAME must be set before running schema discovery.")
+        return 1
+
+    raw_app_filter = os.environ.get("APP_FILTER", "")
+    raw_date_start = os.environ.get("DATE_START", "")
+    raw_date_end = os.environ.get("DATE_END", "")
+
+    try:
+        app_filter = sanitize_filter_value(raw_app_filter, "APP_FILTER") if raw_app_filter else ""
+        date_start = validate_date(raw_date_start, "DATE_START") if raw_date_start else ""
+        date_end = validate_date(raw_date_end, "DATE_END") if raw_date_end else ""
+    except ValueError as exc:
+        print(f"❌ {exc}")
+        return 1
+
+    filters = {"app_filter": app_filter, "date_start": date_start, "date_end": date_end}
+
+    # Ensure downstream helpers read sanitised values.
+    os.environ["APP_FILTER"] = app_filter
+    os.environ["DATE_START"] = date_start
+    os.environ["DATE_END"] = date_end
+
+    outputs_path = ensure_directory(f"run_logs/{run_hash}/outputs/schema")
+
     print(f"Run Hash: {run_hash}")
     print(f"Dataset: {dataset_name}")
-    print(f"App Filter: {app_filter if app_filter else 'ALL_APPS'}")
-    print(f"Date Range: {date_start if date_start else 'ALL_DATES'} to {date_end if date_end else 'ALL_DATES'}")
-    print(f"Outputs Directory: {outputs_dir}")
+    print(f"App Filter: {app_filter or 'ALL_APPS'}")
+    print(
+        "Date Range: "
+        f"{date_start or 'ALL_DATES'} to {date_end or 'ALL_DATES'}"
+    )
+    print(f"Outputs Directory: {outputs_path}")
     print()
-    
+
     try:
-        # Initialize BigQuery client
         client = get_bigquery_client()
-        
-        # 1. Discover schema
+    except Exception as exc:
+        print(f"❌ Unable to initialise BigQuery client: {exc}")
+        return 1
+
+    try:
         schema_info = discover_schema(client, dataset_name)
-        
-        # 2. Get available apps and date range
         available_apps_df = get_available_apps(client, dataset_name)
-        date_range_df = get_available_date_range(client, dataset_name, app_filter if app_filter else None)
-        
-        # 3. Sample data with optional filters
-        sample_df = sample_data(client, dataset_name)
-        if sample_df is None or len(sample_df) == 0:
-            print("❌ No data found with the specified filters. Please check your app filter and date range.")
-            print("💡 Available apps and date ranges have been saved for reference.")
-            
-            # Still create a minimal schema mapping
-            schema_mapping = {
-                'version': '1.0',
-                'run_hash': run_hash,
-                'generated_at': datetime.now().isoformat(),
-                'table': dataset_name,
-                'filters': {
-                    'app_filter': app_filter if app_filter else 'ALL_APPS',
-                    'date_start': date_start if date_start else 'ALL_DATES',
-                    'date_end': date_end if date_end else 'ALL_DATES'
-                },
-                'error': 'No data found with specified filters',
-                'available_apps': available_apps_df.to_dict('records') if available_apps_df is not None else [],
-                'available_date_range': date_range_df.to_dict('records')[0] if date_range_df is not None and len(date_range_df) > 0 else {}
-            }
-            
-            # Save minimal outputs
-            with open(f'{outputs_dir}/schema_mapping.json', 'w') as f:
-                json.dump(schema_mapping, f, indent=2)
-            
-            if available_apps_df is not None:
-                available_apps_df.to_csv(f'{outputs_dir}/available_apps.csv', index=False)
-            
-            print("✅ Minimal schema mapping saved with available apps and date ranges")
-            return 1
-        
-        # 4. Analyze event taxonomy with optional filters
-        event_taxonomy_df = analyze_event_taxonomy(client, dataset_name)
-        
-        # 5. Identify user columns
-        user_candidates = identify_user_columns(client, dataset_name, sample_df)
-        
-        # 6. Analyze revenue columns
-        revenue_columns = analyze_revenue_columns(client, dataset_name, sample_df)
-        
-        # 7. Assess data quality
-        quality_metrics = assess_data_quality(client, dataset_name, sample_df)
-        
-        # 8. Create master schema mapping
-        schema_mapping = create_schema_mapping(
-            schema_info, user_candidates, revenue_columns, 
-            event_taxonomy_df, quality_metrics, available_apps_df, date_range_df
+        date_range_df = get_available_date_range(
+            client, dataset_name, app_filter if app_filter else None
         )
-        
-        # Save outputs
+
+        sample_df = sample_data(client, dataset_name)
+        data_available = sample_df is not None and len(sample_df) > 0
+        if not data_available:
+            print(
+                "⚠️  No sample data found for the provided filters. "
+                "Proceeding with structural outputs only."
+            )
+
+        event_taxonomy_df = analyze_event_taxonomy(client, dataset_name)
+        event_taxonomy_records = annotate_event_taxonomy(event_taxonomy_df)
+
+        user_candidates = identify_user_columns(client, dataset_name, sample_df)
+        revenue_columns = analyze_revenue_columns(client, dataset_name, sample_df)
+        quality_metrics = assess_data_quality(client, dataset_name, sample_df)
+
+        user_rules = build_user_identification_rules(user_candidates)
+        iap_schema, admon_schema = build_revenue_schemas(
+            event_taxonomy_records, revenue_columns, quality_metrics
+        )
+
+        schema_mapping = create_schema_mapping(
+            schema_info,
+            user_candidates,
+            revenue_columns,
+            event_taxonomy_records,
+            quality_metrics,
+            available_apps_df,
+            date_range_df,
+            filters,
+            user_rules,
+            iap_schema,
+            admon_schema,
+        )
+
         print("\n💾 Saving outputs...")
-        
-        # Save column definitions
-        with open(f'{outputs_dir}/column_definitions.json', 'w') as f:
-            json.dump(schema_info, f, indent=2)
-        
-        # Save event taxonomy
+        write_json(outputs_path / "column_definitions.json", schema_info)
+        write_json(outputs_path / "user_identification_analysis.json", user_candidates)
+        write_json(outputs_path / "revenue_analysis.json", revenue_columns)
+        write_json(outputs_path / "data_quality_report.json", quality_metrics)
+        write_json(outputs_path / "event_taxonomy.json", event_taxonomy_records)
+        write_json(outputs_path / "user_identification_rules.json", user_rules)
+        write_json(outputs_path / "iap_revenue_schema.json", iap_schema)
+        write_json(outputs_path / "admon_revenue_schema.json", admon_schema)
+        write_json(outputs_path / "schema_mapping.json", schema_mapping)
+
         if event_taxonomy_df is not None:
-            event_taxonomy_df.to_csv(f'{outputs_dir}/event_taxonomy.csv', index=False)
-        
-        # Save available apps
+            event_taxonomy_df.to_csv(outputs_path / "event_taxonomy.csv", index=False)
         if available_apps_df is not None:
-            available_apps_df.to_csv(f'{outputs_dir}/available_apps.csv', index=False)
-        
-        # Save user identification analysis
-        with open(f'{outputs_dir}/user_identification_analysis.json', 'w') as f:
-            json.dump(user_candidates, f, indent=2)
-        
-        # Save revenue analysis
-        with open(f'{outputs_dir}/revenue_analysis.json', 'w') as f:
-            json.dump(revenue_columns, f, indent=2)
-        
-        # Save data quality report
-        with open(f'{outputs_dir}/data_quality_report.json', 'w') as f:
-            json.dump(quality_metrics, f, indent=2)
-        
-        # Save master schema mapping
-        with open(f'{outputs_dir}/schema_mapping.json', 'w') as f:
-            json.dump(schema_mapping, f, indent=2)
-        
-        # Create data quality report markdown
-        with open(f'{outputs_dir}/data_quality_report.md', 'w') as f:
-            f.write(f"# Data Quality Report - Run {run_hash}\n\n")
-            f.write(f"**Dataset**: {dataset_name}\n")
-            f.write(f"**App Filter**: {app_filter if app_filter else 'ALL_APPS'}\n")
-            f.write(f"**Date Range**: {date_start if date_start else 'ALL_DATES'} to {date_end if date_end else 'ALL_DATES'}\n")
-            f.write(f"**Generated**: {datetime.now().isoformat()}\n\n")
-            f.write("## Summary\n\n")
-            f.write(f"- **Total Columns**: {len(schema_info)}\n")
-            f.write(f"- **Data Quality Score**: {schema_mapping['data_quality_score']}%\n")
-            f.write(f"- **Primary User ID Column**: {schema_mapping['user_identification']['primary_field']}\n")
-            f.write(f"- **Revenue Column**: {schema_mapping['revenue_calculation']['revenue_field']}\n")
-            f.write(f"- **Total Events**: {schema_mapping['event_taxonomy']['total_events']}\n\n")
-            
-            if available_apps_df is not None and len(available_apps_df) > 0:
-                f.write("## Available Apps\n\n")
-                f.write("| App Name | Event Count | Earliest Date | Latest Date |\n")
-                f.write("|----------|-------------|---------------|-------------|\n")
-                for _, row in available_apps_df.head(10).iterrows():
-                    f.write(f"| {row['app_longname']} | {row['event_count']:,} | {row['earliest_date']} | {row['latest_date']} |\n")
-                f.write("\n")
-            
-            if quality_metrics:
-                f.write("## Column Quality Metrics\n\n")
-                f.write("| Column | Null % | Data Type | Unique Values | Duplicate % |\n")
-                f.write("|--------|--------|-----------|---------------|-------------|\n")
-                for col, metrics in quality_metrics.items():
-                    f.write(f"| {col} | {metrics['null_percentage']}% | {metrics['data_type']} | {metrics['unique_values']} | {metrics['duplicate_percentage']}% |\n")
-        
-        print("✅ All outputs saved successfully!")
-        print(f"📁 Outputs saved to: {outputs_dir}")
-        print(f"📄 Master schema mapping: {outputs_dir}/schema_mapping.json")
-        
-        return 0
-        
-    except Exception as e:
-        print(f"❌ Error during schema discovery: {str(e)}")
+            available_apps_df.to_csv(outputs_path / "available_apps.csv", index=False)
+
+        write_data_quality_markdown(
+            outputs_path / "data_quality_report.md",
+            run_hash,
+            dataset_name,
+            filters,
+            schema_mapping["data_quality_score"],
+            available_apps_df,
+            quality_metrics,
+            schema_mapping["event_taxonomy"]["category_breakdown"],
+        )
+
+        if rules_engine_integration:
+            try:
+                validation_payload = rules_engine_integration.validate_schema_mapping(
+                    schema_mapping=schema_mapping,
+                    output_dir=str(outputs_path),
+                    user_rules=user_rules,
+                    event_taxonomy=event_taxonomy_records,
+                    revenue_schemas={"iap": iap_schema, "admon": admon_schema},
+                )
+                write_json(outputs_path / "rules_validation.json", validation_payload)
+                print("✅ Rules engine integration completed.")
+            except Exception as exc:  # pragma: no cover - defensive logging
+                print(f"⚠️  Rules engine integration failed: {exc}")
+        else:
+            print("⚠️  Rules engine integration module not available; skipping validation.")
+
+        if data_available:
+            print("✅ All outputs saved successfully!")
+            print(f"📁 Outputs saved to: {outputs_path}")
+            print(f"📄 Master schema mapping: {outputs_path / 'schema_mapping.json'}")
+            return 0
+
+        print(
+            "⚠️  Completed with warnings: no sample rows matched the filters. "
+            "Review available apps/date range and rerun."
+        )
+        return 1
+
+    except Exception as exc:  # pragma: no cover - unexpected failures
+        print(f"❌ Error during schema discovery: {exc}")
         import traceback
+
         traceback.print_exc()
         return 1
 
 if __name__ == "__main__":
     exit(main())
+# Allowed characters: letters, numbers, underscore, dash, space, comma and dot
+SAFE_FILTER_PATTERN = re.compile(r"^[\w\s\-,.]+$")
+EVENT_CATEGORY_KEYWORDS: Dict[str, Tuple[str, ...]] = {
+    "monetization": ("iap", "purchase", "billing", "revenue", "payment", "subscription"),
+    "progression": ("level", "quest", "tutorial", "mission", "milestone", "checkpoint"),
+    "engagement": ("session", "login", "share", "social", "chat", "invite"),
+    "technical": ("error", "crash", "latency", "performance", "load", "exception"),
+    "attribution": ("install", "campaign", "source", "utm", "acquisition"),
+}
+
+
+def ensure_directory(path: str) -> Path:
+    """Create an output directory if it does not already exist."""
+    directory = Path(path)
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def write_json(path: Path, payload: object) -> None:
+    """Write JSON payload with indentation."""
+    path.write_text(json.dumps(payload, indent=2))
+
+
+def write_data_quality_markdown(
+    path: Path,
+    run_hash: str,
+    dataset_name: str,
+    filters: Dict[str, str],
+    data_quality_score: float,
+    available_apps_df: Optional[pd.DataFrame],
+    quality_metrics: Dict[str, Dict[str, object]],
+    category_breakdown: Dict[str, int],
+) -> None:
+    """Render a human-friendly markdown report for quality metrics."""
+    lines = [
+        f"# Data Quality Report - Run {run_hash}",
+        "",
+        f"**Dataset**: {dataset_name}",
+        f"**App Filter**: {filters.get('app_filter') or 'ALL_APPS'}",
+        f"**Date Range Start**: {filters.get('date_start') or 'ALL_DATES'}",
+        f"**Date Range End**: {filters.get('date_end') or 'ALL_DATES'}",
+        f"**Generated**: {datetime.now().isoformat()}",
+        "",
+        "## Summary",
+        "",
+        f"- **Total Columns**: {len(quality_metrics) or 'n/a'}",
+        f"- **Data Quality Score**: {data_quality_score}%",
+        "",
+    ]
+
+    if category_breakdown:
+        lines.extend(
+            [
+                "## Event Category Breakdown",
+                "",
+                "| Category | Events |",
+                "|----------|--------|",
+            ]
+        )
+        for category, count in sorted(category_breakdown.items()):
+            lines.append(f"| {category} | {count} |")
+        lines.append("")
+
+    if available_apps_df is not None and len(available_apps_df) > 0:
+        lines.extend(
+            [
+                "## Available Apps (Top 10)",
+                "",
+                "| App Name | Event Count | Earliest Date | Latest Date |",
+                "|----------|-------------|---------------|-------------|",
+            ]
+        )
+        for _, row in available_apps_df.head(10).iterrows():
+            lines.append(
+                f"| {row['app_longname']} | {row['event_count']:,} | "
+                f"{row['earliest_date']} | {row['latest_date']} |"
+            )
+        lines.append("")
+
+    if quality_metrics:
+        lines.extend(
+            [
+                "## Column Quality Metrics",
+                "",
+                "| Column | Null % | Data Type | Unique Values | Duplicate % |",
+                "|--------|--------|-----------|---------------|-------------|",
+            ]
+        )
+        for column, metrics in quality_metrics.items():
+            lines.append(
+                f"| {column} | {metrics['null_percentage']}% | "
+                f"{metrics['data_type']} | {metrics['unique_values']} | "
+                f"{metrics['duplicate_percentage']}% |"
+            )
+
+    path.write_text("\n".join(lines))
+
+
+def sanitize_filter_value(value: str, name: str) -> str:
+    """Ensure filter values are safe to interpolate into SQL."""
+    value = value.strip()
+    if not value:
+        return value
+    if not SAFE_FILTER_PATTERN.fullmatch(value):
+        raise ValueError(
+            f"Invalid characters detected in {name}. "
+            "Allowed characters: letters, numbers, spaces, hyphen, comma, period, underscore."
+        )
+    return value
+
+
+def validate_date(date_value: str, name: str) -> str:
+    """Validate and normalise YYYY-MM-DD date strings."""
+    if not date_value:
+        return ""
+    try:
+        return datetime.strptime(date_value.strip(), "%Y-%m-%d").date().isoformat()
+    except ValueError as exc:
+        raise ValueError(f"{name} must be in YYYY-MM-DD format") from exc
+
+
+def categorize_event(event_name: str) -> str:
+    """Return an event category based on keyword heuristics."""
+    name_lower = (event_name or "").lower()
+    for category, keywords in EVENT_CATEGORY_KEYWORDS.items():
+        if any(keyword in name_lower for keyword in keywords):
+            return category
+    return "uncategorized"
+
+
+def annotate_event_taxonomy(df: Optional[pd.DataFrame]) -> List[Dict[str, object]]:
+    """Convert taxonomy dataframe to annotated JSON-friendly records."""
+    if df is None or df.empty:
+        return []
+
+    records: List[Dict[str, object]] = []
+    for record in df.to_dict("records"):
+        record["category"] = categorize_event(record.get("event_name"))
+        if "first_seen" in record and record["first_seen"]:
+            record["first_seen"] = str(record["first_seen"])
+        if "last_seen" in record and record["last_seen"]:
+            record["last_seen"] = str(record["last_seen"])
+        records.append(record)
+    return records
+
+
+def build_revenue_schemas(
+    taxonomy_records: Iterable[Dict[str, object]],
+    revenue_columns: List[Dict[str, object]],
+    quality_metrics: Dict[str, Dict[str, object]],
+) -> Tuple[Dict[str, object], Dict[str, object]]:
+    """Generate IAP and AdMon schema definitions based on heuristics."""
+    taxonomy_records = list(taxonomy_records)
+
+    def _find_events(keywords: Tuple[str, ...]) -> List[str]:
+        selected = {
+            record["event_name"]
+            for record in taxonomy_records
+            if any(keyword in record["event_name"].lower() for keyword in keywords)
+        }
+        return sorted(selected)
+
+    def _select_revenue_column(preferred_keywords: Tuple[str, ...]) -> Optional[str]:
+        for column in revenue_columns:
+            name_lower = column["column_name"].lower()
+            if any(keyword in name_lower for keyword in preferred_keywords):
+                return column["column_name"]
+        return None
+
+    iap_events = _find_events(("iap", "purchase", "checkout", "payment", "store"))
+    ad_events = _find_events(("ad", "reward", "interstitial", "banner", "impression"))
+
+    converted_col = _select_revenue_column(("converted_revenue", "revenue"))
+    raw_revenue_col = _select_revenue_column(("ad_revenue", "monetization"))
+    validation_col = _select_revenue_column(("is_revenue_event", "is_iap"))
+
+    def _quality_note(column_name: Optional[str]) -> Optional[str]:
+        if not column_name:
+            return None
+        metrics = quality_metrics.get(column_name)
+        if not metrics:
+            return None
+        return (
+            f"Null rate {metrics['null_percentage']}%, "
+            f"unique values {metrics['unique_values']}."
+        )
+
+    iap_schema = {
+        "version": "1.0",
+        "events": iap_events,
+        "revenue_field": converted_col or raw_revenue_col,
+        "validation_field": validation_col,
+        "filters": "is_revenue_event = TRUE" if validation_col else None,
+        "refund_handling": "Exclude negative revenue rows; flag duplicates via transaction_id where available.",
+        "aggregation": {
+            "dimensions": ["event_date", "country", "platform"],
+            "metrics": ["SUM(revenue)", "COUNT(DISTINCT custom_user_id)"],
+        },
+        "data_quality_notes": _quality_note(converted_col or raw_revenue_col),
+    }
+
+    admon_schema = {
+        "version": "1.0",
+        "events": ad_events,
+        "revenue_field": raw_revenue_col or converted_col,
+        "validation_field": validation_col,
+        "filters": "event_category = 'ad'" if any("ad_" in e for e in ad_events) else None,
+        "aggregation": {
+            "dimensions": ["event_date", "placement", "country"],
+            "metrics": ["SUM(revenue)", "AVG(ecpm)"],
+        },
+        "data_quality_notes": _quality_note(raw_revenue_col or converted_col),
+    }
+
+    return iap_schema, admon_schema
+
+
+def build_user_identification_rules(
+    user_candidates: List[Dict[str, object]]
+) -> Dict[str, object]:
+    """Convert user candidate analysis into hierarchy rules."""
+    if not user_candidates:
+        return {
+            "hierarchy": [
+                {"field": "custom_user_id", "usage": "Primary identifier when available"},
+                {"field": "device_id", "usage": "Fallback when user id missing"},
+            ],
+            "deduplication": {
+                "strategy": "Use (device_id, event_date) pairs to track potential duplicates.",
+                "confidence": 0.4,
+            },
+            "device_sharing_guidance": "Monitor for >3 distinct users per device per 7 days.",
+        }
+
+    hierarchy = []
+    for index, candidate in enumerate(user_candidates):
+        null_pct = candidate.get("null_percentage", 100)
+        confidence = max(0.1, round(1 - (null_pct / 100), 2))
+        hierarchy.append(
+            {
+                "field": candidate["column_name"],
+                "usage": "Primary identifier" if index == 0 else "Fallback identifier",
+                "confidence": confidence,
+                "null_percentage": null_pct,
+            }
+        )
+
+    dedupe_source = user_candidates[0]["column_name"]
+    rules = {
+        "hierarchy": hierarchy,
+        "deduplication": {
+            "strategy": f"Deduplicate on ({dedupe_source}, device_id, DATE(adjusted_timestamp)).",
+            "confidence": hierarchy[0]["confidence"],
+        },
+        "device_sharing_guidance": "Escalate when >5 devices map to the same identifier within 24h.",
+    }
+    return rules
+
+
+def infer_project_from_dataset(dataset_name: Optional[str]) -> Optional[str]:
+    """Infer the Google Cloud project id from dataset string."""
+    if not dataset_name or "." not in dataset_name:
+        return None
+    return dataset_name.split(".", 1)[0]
