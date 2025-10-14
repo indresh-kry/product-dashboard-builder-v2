@@ -67,7 +67,7 @@
 
 ## Enhanced Scripts v2.0 (2025-10-14)
 
-### schema_discovery_enhanced_v2.py
+### schema_discovery_v3.py
 - **Version**: 2.0.0
 - **Status**: Active
 - **Description**: Enhanced schema discovery with session duration calculation fields and revenue classification
@@ -94,7 +94,7 @@
 
 ## Enhanced Scripts v2.0+ (2025-10-14) - Latest Versions
 
-### schema_discovery_enhanced_v2.py
+### schema_discovery_v3.py
 - **Version**: 2.0.0
 - **Status**: ✅ Active
 - **Description**: Enhanced schema discovery with session duration calculation fields and revenue classification
@@ -176,7 +176,7 @@
 
 ### Execution Order:
 1. **Phase 0**: `system_health_check.py` v2.1.0
-2. **Phase 1**: `schema_discovery_enhanced_v2.py` v2.0.0 ✅
+2. **Phase 1**: `schema_discovery_v3.py` v3.0.0 ✅
 3. **Phase 2**: `data_aggregation_enhanced_v2_simplified.py` v2.0.4 ⚠️
 
 ### Outputs Generated:
@@ -193,7 +193,7 @@
 - **Revenue Events**: 3,181 ad revenue events, 9 IAP events
 - **Level Events**: 13 levels available (div_level_1 through div_level_13)
 
-### data_aggregation_enhanced_v2_final_working.py
+### data_aggregation_v3.py
 - **Version**: 2.0.6
 - **Status**: ✅ Active
 - **Description**: Final working version with all SQL issues resolved
@@ -260,6 +260,31 @@
   - **Usage**: `python scripts/analysis_workflow_orchestrator.py [options]`
   - **Dependencies**: All phase scripts in scripts/ directory
   - **Integration**: Orchestrates all other scripts in the workflow
+
+- **schema_discovery_v3.py**: v3.0.0
+  - **Purpose**: Enhanced schema discovery with session duration and revenue classification
+  - **Status**: ✅ Active (Renamed from enhanced_v2)
+  - **Features**: 
+    - Session duration calculation field identification
+    - Revenue classification mapping
+    - Enhanced user identification with data quality assessment
+    - Comprehensive data quality reporting
+  - **Usage**: Called by orchestrator in Phase 1
+  - **Dependencies**: BigQuery client, pandas, json
+  - **Integration**: Provides schema mapping for data aggregation
+
+- **data_aggregation_v3.py**: v3.0.0
+  - **Purpose**: Final working data aggregation with all SQL fixes
+  - **Status**: ✅ Active (Renamed from enhanced_v2_final_working)
+  - **Features**: 
+    - Session duration calculation (timestamp-based)
+    - Revenue classification (iap/ad/subscription)
+    - Dynamic level fields (13 levels)
+    - Data quality callouts
+    - Proper GROUP BY handling
+  - **Usage**: Called by orchestrator in Phase 2
+  - **Dependencies**: BigQuery client, pandas, schema mapping
+  - **Integration**: Generates user-daily aggregated data
 
 ### 📈 Next Steps for Production:
 1. Test orchestrator with full workflow execution

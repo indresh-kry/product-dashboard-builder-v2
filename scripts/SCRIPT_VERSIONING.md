@@ -13,10 +13,12 @@ All scripts follow semantic versioning: `MAJOR.MINOR.PATCH`
 - `system_health_check.py` - **v2.1.0** (Enhanced with merged Phase 1 improvements)
 
 ### Phase 1 - Schema Discovery
+- `schema_discovery_v3.py` - **v3.0.0** (Renamed from enhanced_v2, with session/revenue analysis)
 - `schema_discovery_enhanced.py` - **v2.0.0** (Enhanced with type hints and error handling)
 - `schema_discovery_with_raw_data.py` - **v1.0.0** (New script with raw data output)
 
 ### Phase 2 - Data Aggregation
+- `data_aggregation_v3.py` - **v3.0.0** (Renamed from enhanced_v2_final_working, with all fixes)
 - `data_aggregation_enhanced.py` - **v1.2.0** (Enhanced with table creation and CSV fallback)
 
 ### Supporting Scripts
@@ -29,9 +31,24 @@ All scripts follow semantic versioning: `MAJOR.MINOR.PATCH`
 - **v2.0.0** - Added dataclass structure and improved validation
 - **v2.1.0** - Enhanced with merged Phase 1 improvements
 
+### schema_discovery_v3.py
+- **v3.0.0** - Renamed from schema_discovery_enhanced_v2.py for cleaner versioning
+- **v2.0.0** - Added session duration calculation fields and revenue classification
+- **v1.0.0** - Initial version with raw data output capability
+
 ### schema_discovery_enhanced.py
 - **v1.0.0** - Initial enhanced version
 - **v2.0.0** - Added type hints, improved error handling, project inference
+
+### data_aggregation_v3.py
+- **v3.0.0** - Renamed from data_aggregation_enhanced_v2_final_working.py for cleaner versioning
+- **v2.0.6** - Fixed GROUP BY issues with proper aggregation functions
+- **v2.0.5** - Removed session count to eliminate SQL ambiguity
+- **v2.0.4** - Simplified working version focusing on core requirements
+- **v2.0.3** - Final version with proper table aliases
+- **v2.0.2** - Working version with simplified query structure
+- **v2.0.1** - Fixed version attempting to resolve session_id ambiguity
+- **v2.0.0** - Added session duration calculation and revenue classification
 
 ### data_aggregation_enhanced.py
 - **v1.0.0** - Initial enhanced version
@@ -160,7 +177,8 @@ Examples:
 ## Version 2.0.6 (2025-10-14) - Final Working Version
 
 ### Data Aggregation Scripts
-- **data_aggregation_enhanced_v2_final_working.py**: v2.0.6
+- **data_aggregation_v3.py**: v3.0.0
+  - Renamed from data_aggregation_enhanced_v2_final_working.py for cleaner versioning
   - Final working version with all SQL issues resolved
   - Session duration calculation (timestamp-based)
   - Revenue classification (iap, ad, subscription)

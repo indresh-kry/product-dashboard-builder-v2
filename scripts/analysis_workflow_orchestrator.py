@@ -250,7 +250,7 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
         
         try:
             # Use enhanced schema discovery script
-            script_path = "scripts/schema_discovery_enhanced_v2.py"
+            script_path = "scripts/schema_discovery_v3.py"
             
             success, output = self._execute_script(script_path, run_hash, "Schema Discovery")
             
@@ -282,7 +282,7 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
         
         try:
             # Use final working data aggregation script
-            script_path = "scripts/data_aggregation_enhanced_v2_final_working.py"
+            script_path = "scripts/data_aggregation_v3.py"
             
             success, output = self._execute_script(script_path, run_hash, "Data Aggregation")
             
