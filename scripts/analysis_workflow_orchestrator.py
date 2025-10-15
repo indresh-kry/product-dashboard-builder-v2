@@ -316,37 +316,33 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
         Phase 3: User Segmentation with Statistical Framework
         
         Establishes user segmentation with statistical grounding.
-        Defines install_month segments and behavioral segments.
+        Defines install cohorts, behavioral segments, and revenue segments.
         """
         self._log_phase_start("Phase 3: User Segmentation", run_hash)
         
         try:
-            # TODO: Implement user segmentation script
-            # For now, create placeholder outputs
-            segments_dir = Path(f"run_logs/{run_hash}/outputs/segments")
+            # Execute user segmentation script
+            script_path = Path("scripts/user_segmentation_v1.py")
+            if not script_path.exists():
+                raise FileNotFoundError(f"User segmentation script not found: {script_path}")
             
-            # Create placeholder segment definitions
-            segment_definitions = {
-                "version": "1.0",
-                "run_hash": run_hash,
-                "generated_at": datetime.now().isoformat(),
-                "segments": {
-                    "install_month": "Placeholder - to be implemented",
-                    "behavioral": "Placeholder - to be implemented",
-                    "revenue_based": "Placeholder - to be implemented"
-                },
-                "statistical_framework": {
-                    "significance_threshold": self.config['statistical_significance'],
-                    "minimum_sample_size": self.config['minimum_sample_size'],
-                    "confidence_threshold": self.config['confidence_threshold']
-                }
-            }
+            # Set up environment for segmentation
+            env = os.environ.copy()
+            env.update({
+                'SEGMENTATION_MINIMUM_SAMPLE_SIZE': str(getattr(args, 'segmentation_minimum_sample_size', 30)),
+                'SEGMENTATION_SIGNIFICANCE_THRESHOLD': str(self.config.get('statistical_significance', 0.05)),
+                'SEGMENTATION_CONFIDENCE_THRESHOLD': str(self.config.get('confidence_threshold', 0.85))
+            })
             
-            with open(segments_dir / "segment_definitions.json", 'w') as f:
-                json.dump(segment_definitions, f, indent=2)
+            # Execute the script
+            result = self._execute_script(script_path, env)
             
-            self._log_phase_completion("Phase 3: User Segmentation", run_hash, True, "Placeholder implementation")
-            return True
+            if result.returncode == 0:
+                self._log_phase_completion("Phase 3: User Segmentation", run_hash, True, "User segments created successfully")
+                return True
+            else:
+                self._log_phase_completion("Phase 3: User Segmentation", run_hash, False, f"Script failed with return code {result.returncode}")
+                return False
             
         except Exception as e:
             self._log_phase_completion("Phase 3: User Segmentation", run_hash, False, str(e))
@@ -712,6 +708,10 @@ Examples:
                        help='Limit for raw data sampling (default: 10000)')
     parser.add_argument('--aggregation-limit', type=int, default=1000,
                        help='Limit for aggregation output rows (default: 1000)')
+    
+    # Segmentation options
+    parser.add_argument('--segmentation-minimum-sample-size', type=int, default=30,
+                       help='Minimum sample size for segmentation (default: 30)')
     
     # Execution options
     parser.add_argument('--continue-on-error', action='store_true',

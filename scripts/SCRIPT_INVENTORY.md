@@ -16,7 +16,13 @@
 ### Phase 2 - Data Aggregation
 | Script | Version | Status | Last Used | Description |
 |--------|---------|--------|-----------|-------------|
-| `data_aggregation_enhanced.py` | v1.2.0 | ✅ Active | Run 941aad | Enhanced aggregation with table creation |
+| `data_aggregation_v3.py` | v3.3.0 | ✅ Active | Run 90f9ac | Final working version with all fixes |
+| `data_aggregation_enhanced.py` | v1.2.0 | 🗄️ Legacy | Run 941aad | Enhanced aggregation with table creation |
+
+### Phase 3 - User Segmentation
+| Script | Version | Status | Last Used | Description |
+|--------|---------|--------|-----------|-------------|
+| `user_segmentation_v1.py` | v1.0.0 | ✅ Active | New | Install cohorts, behavioral segments, revenue segments |
 
 ### Supporting Scripts
 | Script | Version | Status | Last Used | Description |

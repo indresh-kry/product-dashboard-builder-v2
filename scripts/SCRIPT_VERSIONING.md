@@ -21,6 +21,9 @@ All scripts follow semantic versioning: `MAJOR.MINOR.PATCH`
 - `data_aggregation_v3.py` - **v3.0.0** (Renamed from enhanced_v2_final_working, with all fixes)
 - `data_aggregation_enhanced.py` - **v1.2.0** (Enhanced with table creation and CSV fallback)
 
+### Phase 3 - User Segmentation
+- `user_segmentation_v1.py` - **v1.0.0** (Initial version with install cohorts, behavioral segments, revenue segments, retention analysis, and user journey tracking)
+
 ### Supporting Scripts
 - `rules_engine_integration.py` - **v1.0.0** (New integration script)
 
@@ -207,12 +210,13 @@ Examples:
 ## Version 1.0.0 (2025-10-14) - Orchestrator Implementation
 
 ### Workflow Orchestration
-- **analysis_workflow_orchestrator.py**: v1.0.0
+- **analysis_workflow_orchestrator.py**: v1.2.0
   - Central orchestrator for entire analysis workflow
   - Automated execution of all phases (0-6)
   - Command-line interface with comprehensive options
   - Environment management and run hash generation
   - Error handling and recovery mechanisms
+  - Phase 3 user segmentation integration
   - Progress tracking and logging
   - **Status**: ✅ Active (New implementation)
   - **Features**: Full workflow automation, phase management, reporting
