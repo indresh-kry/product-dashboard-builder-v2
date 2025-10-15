@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
 Enhanced Data Aggregation Script - Final Working Version
-Version: 3.0.0
-Last Updated: 2025-10-14
+Version: 3.3.0
+Last Updated: 2025-10-15
 
 Changelog:
+- v3.3.0 (2025-10-15): Added missing cohort analysis with cohort_date, days_since_first_event, and user_type fields
+- v3.2.0 (2025-10-15): Fixed case sensitivity in revenue classification patterns using UPPER() function
+- v3.1.0 (2025-10-15): Fixed revenue classification logic to use name column with generic patterns
 - v3.0.0 (2025-10-14): Renamed from data_aggregation_enhanced_v2_final_working.py for cleaner versioning
 - v2.0.6 (2025-10-14): Fixed GROUP BY issues with proper aggregation functions
 - v2.0.5 (2025-10-14): Removed session count to eliminate SQL ambiguity
@@ -122,13 +125,30 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         {where_clause}
         AND session_id IS NOT NULL
         GROUP BY session_id, DATE(adjusted_timestamp)
+    ),
+    
+    user_cohorts AS (
+        SELECT 
+            COALESCE({primary_user_id}, device_id) as user_id,
+            MIN(DATE(adjusted_timestamp)) as cohort_date
+        FROM `{dataset_name}`
+        {where_clause}
+        GROUP BY COALESCE({primary_user_id}, device_id)
     )
     
     SELECT 
         -- Primary Key
         COALESCE({primary_user_id}, device_id) as user_id,
         device_id,
-        DATE(adjusted_timestamp) as date,
+        DATE(t.adjusted_timestamp) as date,
+        
+        -- User Cohort Information
+        uc.cohort_date,
+        DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), uc.cohort_date, DAY) as days_since_first_event,
+        CASE 
+            WHEN DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), uc.cohort_date, DAY) = 0 THEN 'new'
+            ELSE 'returning'
+        END as user_type,
         
         -- Session Duration Metrics (Enhanced with Duration Calculation)
         -- Note: Session count removed to eliminate SQL ambiguity
@@ -140,15 +160,59 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         SUM(CASE WHEN is_revenue_valid = true THEN converted_revenue ELSE 0 END) as total_revenue,
         SUM(CASE WHEN is_revenue_valid = true AND converted_currency = 'USD' THEN converted_revenue ELSE 0 END) as total_revenue_usd,
         
-        -- Revenue by Type (Enhanced Classification)
-        SUM(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%iap%' THEN converted_revenue ELSE 0 END) as iap_revenue,
-        SUM(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%ad%' THEN converted_revenue ELSE 0 END) as ad_revenue,
-        SUM(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%subscription%' THEN converted_revenue ELSE 0 END) as subscription_revenue,
+        -- Revenue by Type (Enhanced Generic Classification)
+        SUM(CASE WHEN is_revenue_valid = true AND (
+            UPPER(name) LIKE '%IAP%' OR 
+            UPPER(name) LIKE '%PURCHASE%' OR 
+            UPPER(name) LIKE '%BUY%' OR
+            UPPER(name) LIKE '%INAPP%' OR
+            UPPER(name) LIKE '%TRANSACTION%'
+        ) THEN converted_revenue ELSE 0 END) as iap_revenue,
         
-        -- Revenue Event Counts by Type
-        COUNT(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%iap%' THEN 1 END) as iap_events_count,
-        COUNT(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%ad%' THEN 1 END) as ad_events_count,
-        COUNT(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%subscription%' THEN 1 END) as subscription_events_count,
+        SUM(CASE WHEN is_revenue_valid = true AND (
+            UPPER(name) LIKE '%AD%' OR 
+            UPPER(name) LIKE '%ADS%' OR 
+            UPPER(name) LIKE '%ADMON%' OR
+            UPPER(name) LIKE '%ADVERTISEMENT%' OR
+            UPPER(name) LIKE '%BANNER%' OR
+            UPPER(name) LIKE '%INTERSTITIAL%' OR
+            UPPER(name) LIKE '%REWARDED%'
+        ) THEN converted_revenue ELSE 0 END) as ad_revenue,
+        
+        SUM(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%sub%' OR 
+            name LIKE '%subscription%' OR 
+            name LIKE '%recurring%' OR
+            name LIKE '%premium%' OR
+            name LIKE '%pro%'
+        ) THEN converted_revenue ELSE 0 END) as subscription_revenue,
+        
+        -- Revenue Event Counts by Type (Enhanced Generic Classification)
+        COUNT(CASE WHEN is_revenue_valid = true AND (
+            UPPER(name) LIKE '%IAP%' OR 
+            UPPER(name) LIKE '%PURCHASE%' OR 
+            UPPER(name) LIKE '%BUY%' OR
+            UPPER(name) LIKE '%INAPP%' OR
+            UPPER(name) LIKE '%TRANSACTION%'
+        ) THEN 1 END) as iap_events_count,
+        
+        COUNT(CASE WHEN is_revenue_valid = true AND (
+            UPPER(name) LIKE '%AD%' OR 
+            UPPER(name) LIKE '%ADS%' OR 
+            UPPER(name) LIKE '%ADMON%' OR
+            UPPER(name) LIKE '%ADVERTISEMENT%' OR
+            UPPER(name) LIKE '%BANNER%' OR
+            UPPER(name) LIKE '%INTERSTITIAL%' OR
+            UPPER(name) LIKE '%REWARDED%'
+        ) THEN 1 END) as ad_events_count,
+        
+        COUNT(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%sub%' OR 
+            name LIKE '%subscription%' OR 
+            name LIKE '%recurring%' OR
+            name LIKE '%premium%' OR
+            name LIKE '%pro%'
+        ) THEN 1 END) as subscription_events_count,
         COUNT(CASE WHEN is_revenue_valid = true THEN 1 END) as total_revenue_events_count,
         
         -- Revenue Timestamps
@@ -192,14 +256,16 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         
     FROM `{dataset_name}` t
     LEFT JOIN session_durations sd ON t.session_id = sd.session_id AND DATE(t.adjusted_timestamp) = sd.date
+    LEFT JOIN user_cohorts uc ON COALESCE({primary_user_id}, device_id) = uc.user_id
     {where_clause}
     GROUP BY 
         COALESCE({primary_user_id}, device_id),
         device_id,
-        DATE(adjusted_timestamp)
+        DATE(t.adjusted_timestamp),
+        uc.cohort_date
     ORDER BY 
         COALESCE({primary_user_id}, device_id),
-        DATE(adjusted_timestamp)
+        DATE(t.adjusted_timestamp)
     LIMIT {limit};
     """
     
