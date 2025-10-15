@@ -139,6 +139,7 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
     def _log_phase_start(self, phase_name: str, run_hash: str):
         """Log phase start to run log."""
         log_file = Path(f"run_logs/{run_hash}/logs/run.log")
+        log_file.parent.mkdir(parents=True, exist_ok=True)
         with open(log_file, 'a') as f:
             f.write(f"\n{datetime.now().isoformat()} - Starting {phase_name}\n")
         print(f"\n🚀 Starting {phase_name}...")
@@ -146,6 +147,7 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
     def _log_phase_completion(self, phase_name: str, run_hash: str, success: bool, details: str = ""):
         """Log phase completion to run log."""
         log_file = Path(f"run_logs/{run_hash}/logs/run.log")
+        log_file.parent.mkdir(parents=True, exist_ok=True)
         status = "SUCCESS" if success else "FAILED"
         with open(log_file, 'a') as f:
             f.write(f"{datetime.now().isoformat()} - {phase_name} {status}: {details}\n")
