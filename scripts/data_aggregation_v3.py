@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Enhanced Data Aggregation Script - Final Working Version
-Version: 3.2.0
+Version: 3.3.0
 Last Updated: 2025-10-15
 
 Changelog:
+- v3.3.0 (2025-10-15): Added missing cohort analysis with cohort_date, days_since_first_event, and user_type fields
 - v3.2.0 (2025-10-15): Fixed case sensitivity in revenue classification patterns using UPPER() function
 - v3.1.0 (2025-10-15): Fixed revenue classification logic to use name column with generic patterns
 - v3.0.0 (2025-10-14): Renamed from data_aggregation_enhanced_v2_final_working.py for cleaner versioning
@@ -124,6 +125,15 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         {where_clause}
         AND session_id IS NOT NULL
         GROUP BY session_id, DATE(adjusted_timestamp)
+    ),
+    
+    user_cohorts AS (
+        SELECT 
+            COALESCE({primary_user_id}, device_id) as user_id,
+            MIN(DATE(adjusted_timestamp)) as cohort_date
+        FROM `{dataset_name}`
+        {where_clause}
+        GROUP BY COALESCE({primary_user_id}, device_id)
     )
     
     SELECT 
@@ -131,6 +141,14 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         COALESCE({primary_user_id}, device_id) as user_id,
         device_id,
         DATE(adjusted_timestamp) as date,
+        
+        -- User Cohort Information
+        uc.cohort_date,
+        DATE_DIFF(DATE(adjusted_timestamp), uc.cohort_date, DAY) as days_since_first_event,
+        CASE 
+            WHEN DATE_DIFF(DATE(adjusted_timestamp), uc.cohort_date, DAY) = 0 THEN 'new'
+            ELSE 'returning'
+        END as user_type,
         
         -- Session Duration Metrics (Enhanced with Duration Calculation)
         -- Note: Session count removed to eliminate SQL ambiguity
@@ -238,11 +256,13 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         
     FROM `{dataset_name}` t
     LEFT JOIN session_durations sd ON t.session_id = sd.session_id AND DATE(t.adjusted_timestamp) = sd.date
+    LEFT JOIN user_cohorts uc ON COALESCE({primary_user_id}, device_id) = uc.user_id
     {where_clause}
     GROUP BY 
         COALESCE({primary_user_id}, device_id),
         device_id,
-        DATE(adjusted_timestamp)
+        DATE(adjusted_timestamp),
+        uc.cohort_date
     ORDER BY 
         COALESCE({primary_user_id}, device_id),
         DATE(adjusted_timestamp)
