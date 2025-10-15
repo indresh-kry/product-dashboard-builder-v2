@@ -140,13 +140,13 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         -- Primary Key
         COALESCE({primary_user_id}, device_id) as user_id,
         device_id,
-        DATE(adjusted_timestamp) as date,
+        DATE(t.adjusted_timestamp) as date,
         
         -- User Cohort Information
         uc.cohort_date,
-        DATE_DIFF(DATE(adjusted_timestamp), uc.cohort_date, DAY) as days_since_first_event,
+        DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), uc.cohort_date, DAY) as days_since_first_event,
         CASE 
-            WHEN DATE_DIFF(DATE(adjusted_timestamp), uc.cohort_date, DAY) = 0 THEN 'new'
+            WHEN DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), uc.cohort_date, DAY) = 0 THEN 'new'
             ELSE 'returning'
         END as user_type,
         
@@ -261,11 +261,11 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
     GROUP BY 
         COALESCE({primary_user_id}, device_id),
         device_id,
-        DATE(adjusted_timestamp),
+        DATE(t.adjusted_timestamp),
         uc.cohort_date
     ORDER BY 
         COALESCE({primary_user_id}, device_id),
-        DATE(adjusted_timestamp)
+        DATE(t.adjusted_timestamp)
     LIMIT {limit};
     """
     
