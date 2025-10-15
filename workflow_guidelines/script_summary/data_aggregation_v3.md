@@ -3,8 +3,8 @@
 ## Script Overview
 
 **File**: `scripts/data_aggregation_v3.py`  
-**Version**: 3.0.0  
-**Purpose**: Final working version of data aggregation with session duration calculation, revenue classification, and comprehensive user-daily aggregation.
+**Version**: 3.1.0  
+**Purpose**: Final working version of data aggregation with session duration calculation, enhanced revenue classification, and comprehensive user-daily aggregation.
 
 ## Functions
 
@@ -246,8 +246,13 @@ python scripts/data_aggregation_v3.py
 - Calculates days since first event
 - Classifies users as new or returning
 
-### Revenue Classification
-- Classifies revenue events by type (IAP, ads, subscription)
+### Enhanced Revenue Classification
+- **Generic Pattern Matching**: Uses robust pattern matching for revenue type detection
+- **IAP Detection**: Identifies iap, purchase, buy, inapp, transaction events
+- **AdMon Detection**: Identifies ad, ads, admon, advertisement, banner, interstitial, rewarded events
+- **Subscription Detection**: Identifies sub, subscription, recurring, premium, pro events
+- **Primary Filter**: Uses `is_revenue_valid = true` as first-level check
+- **Column Source**: Uses `name` column instead of `received_revenue_event` for accurate classification
 - Calculates revenue totals by type
 - Counts revenue events by type
 - Tracks first and last purchase times
