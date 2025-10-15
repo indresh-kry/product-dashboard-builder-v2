@@ -253,8 +253,8 @@ def calculate_retention_cohorts(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(cohort_data)
 
 def calculate_user_journey(df: pd.DataFrame) -> pd.DataFrame:
-    """Calculate user journey progression through key milestones."""
-    print("🛤️ Calculating user journey segments...")
+    """Calculate user journey progression through key milestones across all dates."""
+    print("🛤️ Calculating user journey segments across all dates...")
     
     # Define journey stages based on available data
     journey_stages = []
@@ -262,48 +262,66 @@ def calculate_user_journey(df: pd.DataFrame) -> pd.DataFrame:
     # Check for available level events
     level_columns = [col for col in df.columns if col.startswith('level_') and col.endswith('_time')]
     
-    for _, user_row in df.iterrows():
-        user_id = user_row['user_id']
-        device_id = user_row['device_id']
+    # Group by user to analyze their complete journey across all dates
+    for user_id, user_df in df.groupby('user_id'):
+        device_id = user_df['device_id'].iloc[0]
+        cohort_date = user_df['cohort_date'].iloc[0]
         
-        # Determine journey stage
-        stage = 'ftue_start'  # Default stage
-        completion_date = None
-        time_to_stage = 0
+        # Track all stages this user has completed across all dates
+        completed_stages = {}
         
-        # Check FTUE completion
-        if pd.notna(user_row.get('ftue_complete_time')):
-            stage = 'ftue_complete'
-            completion_date = user_row['ftue_complete_time']
+        # Check each date's data for this user
+        for _, user_row in user_df.iterrows():
+            # Check FTUE completion
+            if pd.notna(user_row.get('ftue_complete_time')):
+                ftue_time = user_row['ftue_complete_time']
+                if 'ftue_complete' not in completed_stages or ftue_time < completed_stages['ftue_complete']:
+                    completed_stages['ftue_complete'] = ftue_time
+            
+            # Check level progression
+            for level_col in sorted(level_columns):
+                if pd.notna(user_row.get(level_col)):
+                    level_name = level_col.replace('_time', '')
+                    level_time = user_row[level_col]
+                    if level_name not in completed_stages or level_time < completed_stages[level_name]:
+                        completed_stages[level_name] = level_time
+            
+            # Check first purchase
+            if pd.notna(user_row.get('first_purchase_time')):
+                purchase_time = user_row['first_purchase_time']
+                if 'first_purchase' not in completed_stages or purchase_time < completed_stages['first_purchase']:
+                    completed_stages['first_purchase'] = purchase_time
         
-        # Check level progression
-        for level_col in sorted(level_columns):
-            if pd.notna(user_row.get(level_col)):
-                stage = level_col.replace('_time', '')
-                completion_date = user_row[level_col]
-        
-        # Check first purchase
-        if pd.notna(user_row.get('first_purchase_time')):
-            stage = 'first_purchase'
-            completion_date = user_row['first_purchase_time']
-        
-        # Calculate time to stage
-        if completion_date and pd.notna(user_row.get('cohort_date')):
-            try:
-                completion_dt = pd.to_datetime(completion_date)
-                cohort_dt = pd.to_datetime(user_row['cohort_date'])
-                time_to_stage = (completion_dt - cohort_dt).days
-            except:
-                time_to_stage = 0
-        
+        # Add ftue_start for all users (they all start the journey)
         journey_stages.append({
             'user_id': user_id,
             'device_id': device_id,
-            'journey_stage': stage,
-            'stage_completion_date': completion_date,
-            'time_to_stage_days': time_to_stage,
-            'stage_confidence': 0.9  # Default confidence
+            'journey_stage': 'ftue_start',
+            'stage_completion_date': None,
+            'time_to_stage_days': 0,
+            'stage_confidence': 0.9
         })
+        
+        # Add all completed stages for this user
+        for stage, completion_date in completed_stages.items():
+            # Calculate time to stage from cohort date
+            time_to_stage = 0
+            if completion_date and pd.notna(cohort_date):
+                try:
+                    completion_dt = pd.to_datetime(completion_date)
+                    cohort_dt = pd.to_datetime(cohort_date)
+                    time_to_stage = (completion_dt - cohort_dt).days
+                except:
+                    time_to_stage = 0
+            
+            journey_stages.append({
+                'user_id': user_id,
+                'device_id': device_id,
+                'journey_stage': stage,
+                'stage_completion_date': completion_date,
+                'time_to_stage_days': time_to_stage,
+                'stage_confidence': 0.9
+            })
     
     return pd.DataFrame(journey_stages)
 
@@ -560,19 +578,21 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
         revenue_by_cohort_country_df.rename(columns={'index': 'cohort_date'}, inplace=True)
         revenue_by_cohort_country_df.to_csv(cohort_dir / "revenue_by_cohort_country.csv", index=False)
     
-    # Event funnel by cohort date (detailed)
+    # Event funnel by cohort date (detailed) - using improved journey data
     event_funnel_by_cohort = {}
     for cohort_date, cohort_df in df.groupby('cohort_date'):
         cohort_size = cohort_df['user_id'].nunique()
         event_funnel_by_cohort[cohort_date] = {'cohort_size': cohort_size}
         
-        # Count users who completed each event type
-        for event_col in ['ftue_complete_time', 'level_1_time', 'level_2_time', 'level_3_time', 'level_4_time', 'level_5_time', 'level_6_time', 'level_7_time']:
-            if event_col in cohort_df.columns:
-                event_name = event_col.replace('_time', '')
-                completed_users = cohort_df[cohort_df[event_col].notna()]['user_id'].nunique()
-                event_funnel_by_cohort[cohort_date][f'{event_name}_users'] = completed_users
-                event_funnel_by_cohort[cohort_date][f'{event_name}_rate'] = round(completed_users / cohort_size * 100, 1)
+        # Get journey data for users in this cohort
+        cohort_user_ids = cohort_df['user_id'].unique()
+        cohort_journey = journey_df[journey_df['user_id'].isin(cohort_user_ids)]
+        
+        # Count users who completed each event type across all dates
+        for event_name in ['ftue_complete', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5', 'level_6', 'level_7']:
+            completed_users = len(cohort_journey[cohort_journey['journey_stage'] == event_name])
+            event_funnel_by_cohort[cohort_date][f'{event_name}_users'] = completed_users
+            event_funnel_by_cohort[cohort_date][f'{event_name}_rate'] = round(completed_users / cohort_size * 100, 1)
     
     event_funnel_by_cohort_df = pd.DataFrame.from_dict(event_funnel_by_cohort, orient='index').reset_index()
     event_funnel_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
