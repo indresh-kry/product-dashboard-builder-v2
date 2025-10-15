@@ -5,11 +5,12 @@ This directory contains detailed documentation for all active scripts in the Pro
 ## Purpose
 
 Each script documentation includes:
-- **Function Overview**: All functions defined in the script
-- **External Tools & APIs**: External dependencies and integrations
+- **Function Overview**: All functions defined in the script with parameters and descriptions
+- **Tools & External Dependencies**: External tools, libraries, and APIs with detailed descriptions
+- **Variables & Configuration**: Complete variable documentation by source (input, env, hardcoded, computed)
 - **Flow Diagram**: Mermaid diagram showing function call flow
-- **Usage Examples**: How to use the script
-- **Dependencies**: Required packages and libraries
+- **Usage Examples**: How to use the script with command-line options
+- **Dependencies**: Required packages, libraries, and environment variables
 
 ## Scripts Documented
 
@@ -26,12 +27,21 @@ Each script documentation includes:
 
 Each script documentation follows this structure:
 
-1. **Script Overview** - Purpose and main functionality
-2. **Functions** - All functions with descriptions and parameters
-3. **External Tools & APIs** - Dependencies and integrations
-4. **Flow Diagram** - Mermaid diagram of function call flow
-5. **Usage Examples** - How to execute the script
-6. **Dependencies** - Required packages and environment variables
+1. **Script Overview** - Purpose, version, and main functionality
+2. **Functions** - All functions with descriptions, parameters, and return values
+3. **Tools & External Dependencies** - External tools, libraries, and APIs with detailed descriptions
+4. **Variables & Configuration** - Complete variable documentation organized by source:
+   - Input Variables (Function Parameters)
+   - Environment Variables (from .env files)
+   - Hardcoded Variables
+   - Computed Variables
+5. **Flow Diagram** - Mermaid diagram of function call flow
+6. **Usage Examples** - How to execute the script with command-line options
+7. **Dependencies** - Required packages, libraries, and environment variables
+
+## Template
+
+For new scripts, use the **[SCRIPT_DOCUMENTATION_TEMPLATE.md](./SCRIPT_DOCUMENTATION_TEMPLATE.md)** to ensure consistent documentation structure.
 
 ## Maintenance
 

@@ -143,25 +143,84 @@
 - **Returns**: None
 - **Description**: Parses command line arguments, validates configuration, and executes workflow
 
-## External Tools & APIs
+## Tools & External Dependencies
 
-### Command Line Interface
-- **argparse**: Command line argument parsing
-- **subprocess**: Script execution and process management
+### Command Line Tools
+- **argparse**: Command line argument parsing and validation
+- **subprocess**: Script execution, process management, and timeout handling
+- **sys**: System-specific parameters and exit codes
 
-### File System Operations
-- **pathlib.Path**: Cross-platform path handling
-- **os**: Environment variables and system operations
+### File System Tools
+- **pathlib.Path**: Cross-platform path handling and directory operations
+- **os**: Environment variables, system operations, and file permissions
+- **json**: JSON serialization, deserialization, and file I/O
 
-### Data Processing
-- **json**: JSON serialization and deserialization
-- **datetime**: Date and time operations
-- **secrets**: Cryptographically secure random number generation
+### Data Processing Tools
+- **datetime**: Date and time operations, formatting, and calculations
+- **secrets**: Cryptographically secure random number generation for run hashes
+- **time**: Time-related functions for execution timing and delays
 
-### External Scripts
-- **system_health_check.py**: System validation
-- **schema_discovery_v3.py**: Schema discovery and mapping
-- **data_aggregation_v3.py**: Data aggregation and metric generation
+### External Script Dependencies
+- **system_health_check.py**: System validation and BigQuery connection testing
+- **schema_discovery_v3.py**: Schema discovery, field mapping, and data quality assessment
+- **data_aggregation_v3.py**: Data aggregation, metric generation, and cohort analysis
+- **user_segmentation_v1.py**: User segmentation, behavioral analysis, and funnel tracking
+- **rules_engine_integration.py**: Advanced rule processing and validation (optional)
+
+## Variables & Configuration
+
+### Input Variables (Command Line Arguments)
+- **`--quick`**: Boolean flag for abbreviated analysis mode
+- **`--focus`**: String specifying analysis focus area (revenue, engagement, growth, health, retention)
+- **`--mode`**: String specifying analysis mode (full, schema-only, aggregation-only, custom)
+- **`--validate-only`**: Boolean flag for validation-only execution
+- **`--app-filter`**: String for filtering by app name (e.g., "com.nukebox.mandir")
+- **`--date-start`**: String for analysis start date (YYYY-MM-DD format)
+- **`--date-end`**: String for analysis end date (YYYY-MM-DD format)
+- **`--continue-on-error`**: Boolean flag for error handling behavior
+- **`--dry-run`**: Boolean flag for simulation mode
+- **`--raw-data-limit`**: Integer for raw data sampling limit
+- **`--aggregation-limit`**: Integer for aggregation data limit
+- **`--segmentation-minimum-sample-size`**: Integer for minimum sample size in segmentation
+- **`--confidence-size-weight`**: Float for size confidence weight in segment confidence calculation
+- **`--confidence-variance-weight`**: Float for variance confidence weight in segment confidence calculation
+- **`--confidence-completeness-weight`**: Float for completeness confidence weight in segment confidence calculation
+
+### Environment Variables (from .env files)
+- **`DATASET_NAME`**: BigQuery dataset name (e.g., "gc-prod-459709.nbs_dataset.singular_user_level_event_data")
+- **`DEFAULT_ITERATIONS`**: Default number of analysis iterations
+- **`QUICK_ITERATIONS`**: Number of iterations for quick mode
+- **`CONFIDENCE_THRESHOLD`**: Statistical confidence threshold (default: 0.85)
+- **`MINIMUM_SAMPLE_SIZE`**: Minimum sample size for analysis (default: 30)
+- **`ANALYSIS_WINDOW_DAYS`**: Analysis window in days (default: 60)
+- **`STATISTICAL_SIGNIFICANCE`**: Statistical significance level (default: 0.05)
+- **`MAX_QUERY_COST`**: Maximum query cost limit for BigQuery
+- **`PARALLEL_QUERIES`**: Number of parallel queries allowed
+- **`RETRY_ATTEMPTS`**: Number of retry attempts for failed operations
+- **`TIMEOUT_SECONDS`**: Timeout for script execution (default: 300)
+- **`GOOGLE_CLOUD_PROJECT`**: Google Cloud project ID
+- **`GOOGLE_APPLICATION_CREDENTIALS`**: Path to Google Cloud service account credentials
+
+### Hardcoded Variables
+- **`DEFAULT_CONFIG`**: Dictionary with default configuration values
+- **`PHASE_NAMES`**: List of phase names for workflow execution
+- **`QUICK_PHASES`**: List of phases to execute in quick mode
+- **`FOCUS_PHASES`**: Dictionary mapping focus areas to relevant phases
+- **`RUN_HASH_LENGTH`**: Length of generated run hash (6 characters)
+- **`DEFAULT_TIMEOUT`**: Default timeout for script execution (300 seconds)
+- **`SUCCESS_EXIT_CODE`**: Exit code for successful execution (0)
+- **`ERROR_EXIT_CODE`**: Exit code for failed execution (1)
+
+### Computed Variables
+- **`run_hash`**: Unique 6-character hash generated using secrets.token_hex()
+- **`start_time`**: Timestamp when workflow execution begins
+- **`phase_results`**: Dictionary tracking success/failure status of each phase
+- **`run_directories`**: Dictionary mapping directory names to Path objects
+- **`env_file_path`**: Path to run-specific environment file
+- **`log_file_path`**: Path to run-specific log file
+- **`config`**: Merged configuration from environment variables and defaults
+- **`phases_to_run`**: List of phases to execute based on mode and focus
+- **`execution_time`**: Total execution time calculated at workflow completion
 
 ## Flow Diagram
 

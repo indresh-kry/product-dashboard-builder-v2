@@ -167,34 +167,77 @@ Create user segments for product analysis including:
 6. Save all outputs
 7. Return success status
 
-## External Tools and Dependencies
+## Tools & External Dependencies
 
-### Required Packages
-- **pandas**: Data manipulation and analysis
-- **numpy**: Numerical computations
-- **scipy**: Statistical significance testing
-- **json**: JSON serialization
-- **pathlib**: Path handling
-- **datetime**: Date and time handling
+### Data Processing Tools
+- **pandas**: Data manipulation, analysis, aggregation, and CSV I/O operations
+- **numpy**: Numerical computations, statistical operations, and array processing
+- **scipy**: Statistical functions, significance testing, and scientific computing
 
-### Optional Dependencies
-- **google-cloud-bigquery**: BigQuery data loading (if CSV not available)
-- **google-oauth2**: Authentication for BigQuery
+### Google Cloud Tools
+- **google-cloud-bigquery**: BigQuery client for data retrieval and query execution (fallback when CSV unavailable)
+- **google-oauth2**: Authentication and credential management for Google Cloud services
 
-### Environment Variables
-- `RUN_HASH`: Unique identifier for the current run
-- `SEGMENTATION_MINIMUM_SAMPLE_SIZE`: Minimum sample size for statistical significance (default: 30)
-- `SEGMENTATION_SIGNIFICANCE_THRESHOLD`: Statistical significance threshold (default: 0.05)
-- `SEGMENTATION_CONFIDENCE_THRESHOLD`: Confidence threshold for segment assignment (default: 0.85)
-- `ENGAGEMENT_SESSION_FREQUENCY_WEIGHT`: Weight for session frequency in engagement score (default: 0.3)
-- `ENGAGEMENT_SESSION_DURATION_WEIGHT`: Weight for session duration in engagement score (default: 0.25)
-- `ENGAGEMENT_EVENT_FREQUENCY_WEIGHT`: Weight for event frequency in engagement score (default: 0.25)
-- `ENGAGEMENT_RECENCY_WEIGHT`: Weight for recency in engagement score (default: 0.2)
-- `HIGH_ENGAGEMENT_PERCENTILE`: Percentile threshold for high engagement (default: 0.7)
-- `MODERATE_ENGAGEMENT_PERCENTILE`: Percentile threshold for moderate engagement (default: 0.3)
-- `WHALE_REVENUE_PERCENTILE`: Percentile threshold for whale users (default: 0.95)
-- `DOLPHIN_REVENUE_PERCENTILE`: Percentile threshold for dolphin users (default: 0.8)
-- `CHURN_DAYS_THRESHOLD`: Days threshold for churn classification (default: 14)
+### File System Tools
+- **pathlib.Path**: Cross-platform path handling and directory operations
+- **json**: JSON serialization, deserialization, and configuration file I/O
+- **os**: Environment variables, system operations, and file permissions
+
+### Data Analysis Tools
+- **datetime**: Date and time operations, formatting, and calculations
+- **collections**: Data structure utilities and specialized containers
+- **typing**: Type hints and annotations for better code documentation
+
+## Variables & Configuration
+
+### Input Variables (Function Parameters)
+- **`run_hash`**: String identifier for the current analysis run
+- **`df`**: Pandas DataFrame containing aggregated user-daily data
+- **`segment_definitions`**: Dictionary containing segment configuration and thresholds
+- **`analysis_report`**: Dictionary containing analysis results and metadata
+
+### Environment Variables (from .env files)
+- **`RUN_HASH`**: Unique identifier for the current run
+- **`SEGMENTATION_MINIMUM_SAMPLE_SIZE`**: Minimum sample size for statistical significance (default: 30)
+- **`SEGMENTATION_SIGNIFICANCE_THRESHOLD`**: Statistical significance threshold (default: 0.05)
+- **`SEGMENTATION_CONFIDENCE_THRESHOLD`**: Confidence threshold for segment assignment (default: 0.85)
+- **`CONFIDENCE_SIZE_WEIGHT`**: Weight for sample size in confidence calculation (default: 0.4)
+- **`CONFIDENCE_VARIANCE_WEIGHT`**: Weight for variance in confidence calculation (default: 0.4)
+- **`CONFIDENCE_COMPLETENESS_WEIGHT`**: Weight for data completeness in confidence calculation (default: 0.2)
+- **`GOOGLE_CLOUD_PROJECT`**: Google Cloud project ID for BigQuery access
+- **`GOOGLE_APPLICATION_CREDENTIALS`**: Path to Google Cloud service account credentials
+- **`DATASET_NAME`**: BigQuery dataset name for data retrieval
+
+### Hardcoded Variables
+- **`ENGAGEMENT_WEIGHTS`**: Dictionary defining weights for engagement score calculation
+  - `session_frequency_weight`: 0.3
+  - `session_duration_weight`: 0.3
+  - `event_frequency_weight`: 0.2
+  - `recency_weight`: 0.2
+- **`REVENUE_SEGMENT_THRESHOLDS`**: Dictionary defining percentile thresholds for revenue segments
+  - `whale_threshold`: 90th percentile
+  - `dolphin_threshold`: 70th percentile
+  - `minnow_threshold`: 30th percentile
+- **`BEHAVIORAL_SEGMENT_THRESHOLDS`**: Dictionary defining thresholds for behavioral segments
+  - `high_engagement_threshold`: 0.7
+  - `low_engagement_threshold`: 0.3
+  - `churn_threshold_days`: 7 days since last activity
+- **`RETENTION_WINDOWS`**: List of retention analysis windows [0, 1, 3, 7, 14, 30, 60]
+- **`JOURNEY_STAGES`**: List of user journey progression stages
+- **`OUTPUT_DIRECTORIES`**: List of output subdirectories ['daily', 'cohort', 'user_level']
+
+### Computed Variables
+- **`engagement_score`**: Normalized engagement score (0-1) calculated from multiple metrics
+- **`revenue_segment`**: User segment based on revenue contribution (whale, dolphin, minnow, free)
+- **`behavioral_segment`**: User segment based on engagement patterns (high, medium, low, churned)
+- **`segment_confidence`**: Confidence score for segment assignment based on sample size and data quality
+- **`retention_rate`**: Percentage of cohort users active on specific days
+- **`cohort_size`**: Number of users in each install cohort
+- **`time_to_stage_days`**: Days from cohort date to milestone completion
+- **`stage_completion_rate`**: Percentage of users completing each journey stage
+- **`funnel_conversion_rate`**: Conversion rate between consecutive funnel stages
+- **`geographic_metrics`**: Aggregated metrics by country and region
+- **`channel_metrics`**: Aggregated metrics by acquisition channel
 
 ## Output Files
 

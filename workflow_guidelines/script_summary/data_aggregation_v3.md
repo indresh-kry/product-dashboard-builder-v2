@@ -98,32 +98,71 @@
 - **Returns**: None
 - **Description**: Orchestrates the complete data aggregation process
 
-## External Tools & APIs
+## Tools & External Dependencies
 
-### Google Cloud Services
-- **BigQuery Client**: `google.cloud.bigquery.Client`
-  - Purpose: Connect to BigQuery and execute aggregation queries
-  - Usage: Data aggregation, table creation, CSV export
+### Google Cloud Tools
+- **google-cloud-bigquery**: BigQuery client for data aggregation, table creation, and query execution
+- **google-oauth2**: Service account authentication and credential management for Google Cloud services
 
-### Authentication
-- **Service Account**: `google.oauth2.service_account.Credentials`
-  - Purpose: Authenticate with Google Cloud services
-  - Usage: Load credentials for BigQuery access
+### Data Processing Tools
+- **pandas**: Data manipulation, analysis, and CSV export operations
+- **python-dotenv**: Environment variable loading and configuration management
 
-### Data Processing
-- **Pandas**: Data manipulation and analysis
-  - Purpose: Process query results and data formatting
-  - Usage: DataFrame operations, CSV export
+### File System Tools
+- **pathlib.Path**: Cross-platform path handling and directory operations
+- **json**: JSON serialization, deserialization, and configuration file I/O
+- **os**: Environment variables, system operations, and file permissions
 
-### Configuration Management
-- **python-dotenv**: Environment variable loading
-  - Purpose: Load configuration from .env files
-  - Usage: Load aggregation limits and configuration
+### Data Analysis Tools
+- **datetime**: Date and time operations, formatting, and calculations
+- **typing**: Type hints and annotations for better code documentation
 
-### File Operations
-- **JSON**: JSON serialization and deserialization
-- **Pathlib**: Path handling for output files
-- **OS**: Environment variable access
+## Variables & Configuration
+
+### Input Variables (Function Parameters)
+- **`run_hash`**: String identifier for the current analysis run
+- **`dataset_name`**: BigQuery dataset name for data source
+- **`schema_mapping`**: Dictionary containing schema mapping from discovery phase
+- **`limit`**: Integer limit for aggregation query results (default: 1000)
+- **`app_filter`**: String for filtering by app name (optional)
+- **`date_start`**: String for analysis start date (YYYY-MM-DD format, optional)
+- **`date_end`**: String for analysis end date (YYYY-MM-DD format, optional)
+
+### Environment Variables (from .env files)
+- **`AGGREGATION_LIMIT`**: Integer limit for aggregation data (default: 1000)
+- **`GOOGLE_CLOUD_PROJECT`**: Google Cloud project ID for BigQuery access
+- **`GOOGLE_APPLICATION_CREDENTIALS`**: Path to Google Cloud service account credentials
+- **`DATASET_NAME`**: BigQuery dataset name for data source
+- **`APP_FILTER`**: String for filtering by app name (optional)
+- **`DATE_START`**: String for analysis start date (YYYY-MM-DD format, optional)
+- **`DATE_END`**: String for analysis end date (YYYY-MM-DD format, optional)
+- **`RUN_HASH`**: Unique identifier for the current run
+
+### Hardcoded Variables
+- **`REVENUE_CLASSIFICATION_PATTERNS`**: Dictionary defining revenue type classification patterns
+  - `iap_patterns`: ['%iap%', '%purchase%', '%buy%', '%transaction%']
+  - `ad_patterns`: ['%ad%', '%ads%', '%admon%', '%reward%']
+  - `subscription_patterns`: ['%sub%', '%subscription%', '%recurring%']
+- **`SESSION_DURATION_CALCULATION`**: SQL logic for calculating session duration from timestamps
+- **`COHORT_ANALYSIS_WINDOWS`**: List of cohort analysis windows [0, 1, 3, 7, 14, 30, 60]
+- **`DEFAULT_AGGREGATION_FIELDS`**: List of standard aggregation fields for user-daily data
+- **`OUTPUT_FILE_NAMES`**: Dictionary mapping output types to filenames
+  - `aggregated_data`: 'aggregated_data.csv'
+  - `summary_report`: 'aggregation_summary.json'
+  - `sql_query`: 'aggregation_query.sql'
+
+### Computed Variables
+- **`primary_user_id`**: User identifier field determined from schema mapping (custom_user_id or device_id)
+- **`level_fields`**: Dynamic SQL fields for level events based on discovered events
+- **`level_counts`**: Dynamic SQL fields for level event counts
+- **`level_events`**: List of discovered level events for dynamic field generation
+- **`where_clause`**: SQL WHERE clause constructed from app and date filters
+- **`extended_date_start`**: Extended start date (7 days prior) for cohort assignment
+- **`aggregation_query`**: Complete SQL query for user-daily aggregation with CTEs
+- **`session_durations_cte`**: Common Table Expression for session duration calculations
+- **`user_cohorts_cte`**: Common Table Expression for user cohort assignment
+- **`aggregation_summary`**: Dictionary containing aggregation metadata and statistics
+- **`output_paths`**: Dictionary mapping output types to file paths
 
 ## Flow Diagram
 

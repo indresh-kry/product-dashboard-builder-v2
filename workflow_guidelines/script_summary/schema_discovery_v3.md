@@ -134,27 +134,88 @@
 - **Returns**: None
 - **Description**: Orchestrates the complete schema discovery process
 
-## External Tools & APIs
+## Tools & External Dependencies
 
-### Google Cloud Services
-- **BigQuery Client**: `google.cloud.bigquery.Client`
-  - Purpose: Connect to BigQuery and execute queries
-  - Usage: Data sampling, schema discovery, app/date range queries
+### Google Cloud Tools
+- **google-cloud-bigquery**: BigQuery client for data sampling, schema discovery, and query execution
+- **google-oauth2**: Service account authentication and credential management for Google Cloud services
 
-### Authentication
-- **Service Account**: `google.oauth2.service_account.Credentials`
-  - Purpose: Authenticate with Google Cloud services
-  - Usage: Load credentials for BigQuery access
+### Data Processing Tools
+- **pandas**: Data manipulation, analysis, and CSV I/O operations
+- **numpy**: Numerical computations and statistical operations
 
-### Data Processing
-- **Pandas**: Data manipulation and analysis
-  - Purpose: Process sampled data and perform analysis
-  - Usage: DataFrame operations, data quality assessment, event analysis
+### File System Tools
+- **pathlib.Path**: Cross-platform path handling and directory operations
+- **json**: JSON serialization, deserialization, and configuration file I/O
+- **os**: Environment variables, system operations, and file permissions
 
-### File Operations
-- **JSON**: JSON serialization and deserialization
-- **Pathlib**: Path handling for output files
-- **OS**: Environment variable access
+### Data Analysis Tools
+- **datetime**: Date and time operations, formatting, and calculations
+- **typing**: Type hints and annotations for better code documentation
+- **re**: Regular expressions for pattern matching in event analysis
+
+## Variables & Configuration
+
+### Input Variables (Function Parameters)
+- **`run_hash`**: String identifier for the current analysis run
+- **`client`**: BigQuery client instance for data access
+- **`dataset_name`**: BigQuery dataset name for data source
+- **`app_filter`**: String for filtering by app name (optional)
+- **`date_start`**: String for analysis start date (YYYY-MM-DD format, optional)
+- **`date_end`**: String for analysis end date (YYYY-MM-DD format, optional)
+- **`limit`**: Integer limit for data sampling (default: 10000)
+
+### Environment Variables (from .env files)
+- **`RUN_HASH`**: Unique identifier for the current run
+- **`DATASET_NAME`**: BigQuery dataset name for data source
+- **`APP_FILTER`**: String for filtering by app name (optional)
+- **`DATE_START`**: String for analysis start date (YYYY-MM-DD format, optional)
+- **`DATE_END`**: String for analysis end date (YYYY-MM-DD format, optional)
+- **`RAW_DATA_LIMIT`**: Integer limit for raw data sampling (default: 10000)
+- **`GOOGLE_CLOUD_PROJECT`**: Google Cloud project ID for BigQuery access
+- **`GOOGLE_APPLICATION_CREDENTIALS`**: Path to Google Cloud service account credentials
+
+### Hardcoded Variables
+- **`EVENT_TAXONOMY_PATTERNS`**: Dictionary defining event classification patterns
+  - `level_events`: ['div_level_', 'level_', 'stage_', 'chapter_']
+  - `revenue_events`: ['__ADMON_USER_LEVEL_REVENUE__', '__iap__', 'purchase', 'transaction']
+  - `engagement_events`: ['session_start', 'session_end', 'ftue_', 'tutorial_']
+  - `social_events`: ['share_', 'invite_', 'friend_', 'social_']
+- **`USER_IDENTIFICATION_HIERARCHY`**: List of user ID columns in priority order
+  - `primary`: 'custom_user_id'
+  - `fallback`: 'device_id'
+  - `alternative`: 'user_id', 'player_id', 'account_id'
+- **`REVENUE_VALIDATION_RULES`**: Dictionary defining revenue validation criteria
+  - `min_revenue`: 0.01
+  - `max_revenue`: 10000.0
+  - `valid_currencies`: ['USD', 'EUR', 'GBP', 'INR']
+- **`DATA_QUALITY_THRESHOLDS`**: Dictionary defining data quality assessment thresholds
+  - `min_completeness`: 0.8
+  - `max_null_percentage`: 0.2
+  - `min_unique_values`: 10
+- **`OUTPUT_FILE_NAMES`**: Dictionary mapping output types to filenames
+  - `schema_mapping`: 'schema_mapping.json'
+  - `raw_data`: 'sampled_raw_data.csv'
+  - `column_definitions`: 'column_definitions.json'
+  - `event_taxonomy`: 'event_taxonomy.json'
+  - `user_identification`: 'user_identification.json'
+  - `revenue_analysis`: 'revenue_analysis.json'
+  - `session_analysis`: 'session_analysis.json'
+  - `data_quality`: 'data_quality_assessment.json'
+
+### Computed Variables
+- **`schema_info`**: Dictionary containing discovered schema information
+- **`column_definitions`**: Dictionary mapping column names to their definitions and properties
+- **`event_taxonomy`**: Dictionary categorizing events by type and purpose
+- **`user_identification`**: Dictionary containing user ID analysis and recommendations
+- **`revenue_analysis`**: Dictionary containing revenue field analysis and validation
+- **`session_analysis`**: Dictionary containing session field analysis and duration calculations
+- **`data_quality_score`**: Float representing overall data quality (0-1 scale)
+- **`data_quality_assessment`**: Dictionary containing detailed data quality metrics
+- **`available_apps`**: DataFrame containing available apps with event counts and date ranges
+- **`date_range`**: Series containing minimum and maximum dates with total event count
+- **`sampled_data`**: DataFrame containing sampled raw data for analysis
+- **`where_clause`**: SQL WHERE clause constructed from app and date filters
 
 ## Flow Diagram
 
