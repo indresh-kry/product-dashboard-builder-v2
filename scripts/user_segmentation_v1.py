@@ -129,25 +129,26 @@ def calculate_engagement_score(df: pd.DataFrame) -> pd.Series:
     return engagement_score.fillna(0)
 
 def calculate_revenue_segments(df: pd.DataFrame) -> pd.DataFrame:
-    """Calculate revenue-based user segments using percentile thresholds."""
+    """Calculate revenue-based user segments using global percentile thresholds."""
     print("💰 Calculating revenue segments...")
     
-    # Calculate revenue percentiles
-    revenue_percentiles = df['total_revenue'].quantile([0.0, 0.8, 0.95, 1.0])
+    # Calculate global revenue percentiles across entire dataset
+    global_revenue_percentiles = df['total_revenue'].quantile([0.0, 0.8, 0.95, 1.0])
     whale_threshold = float(os.environ.get('WHALE_REVENUE_PERCENTILE', 0.95))
     dolphin_threshold = float(os.environ.get('DOLPHIN_REVENUE_PERCENTILE', 0.8))
     
     def assign_revenue_segment(row):
         if row['total_revenue'] == 0:
             return 'free_user'
-        elif row['total_revenue'] >= revenue_percentiles[whale_threshold]:
+        elif row['total_revenue'] >= global_revenue_percentiles[whale_threshold]:
             return 'whale'
-        elif row['total_revenue'] >= revenue_percentiles[dolphin_threshold]:
+        elif row['total_revenue'] >= global_revenue_percentiles[dolphin_threshold]:
             return 'dolphin'
         else:
             return 'minnow'
     
     df['revenue_segment'] = df.apply(assign_revenue_segment, axis=1)
+    # Calculate percentile based on revenue on that specific date
     df['revenue_percentile'] = df['total_revenue'].rank(pct=True) * 100
     
     return df
@@ -205,7 +206,12 @@ def calculate_segment_confidence(df: pd.DataFrame, segment_column: str, segment_
     size_confidence = min(1.0, sample_size / 100)  # 100+ users = full confidence
     completeness_confidence = max(0.0, data_completeness)
     
-    overall_confidence = (size_confidence * 0.4 + variance_confidence * 0.4 + completeness_confidence * 0.2)
+    # Get confidence weights from environment variables
+    size_weight = float(os.environ.get('CONFIDENCE_SIZE_WEIGHT', 0.4))
+    variance_weight = float(os.environ.get('CONFIDENCE_VARIANCE_WEIGHT', 0.4))
+    completeness_weight = float(os.environ.get('CONFIDENCE_COMPLETENESS_WEIGHT', 0.2))
+    
+    overall_confidence = (size_confidence * size_weight + variance_confidence * variance_weight + completeness_confidence * completeness_weight)
     
     return round(overall_confidence, 2)
 
@@ -346,60 +352,183 @@ def calculate_journey_funnel(df: pd.DataFrame, journey_df: pd.DataFrame) -> pd.D
     return pd.DataFrame(funnel_data)
 
 def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: Dict, analysis_report: Dict):
-    """Save all segment outputs to files."""
+    """Save all segment outputs to files with new structure."""
     print("💾 Saving segment outputs...")
     
     outputs_dir = Path(f"run_logs/{run_hash}/outputs/segments")
     outputs_dir.mkdir(parents=True, exist_ok=True)
     
-    # 1. Install cohorts
-    retention_cohorts = calculate_retention_cohorts(df)
-    retention_cohorts.to_csv(outputs_dir / "retention_cohorts.csv", index=False)
+    # Create subdirectories
+    daily_dir = outputs_dir / "daily"
+    cohort_dir = outputs_dir / "cohort"
+    user_level_dir = outputs_dir / "user_level"
     
-    # 2. Behavioral segments
-    behavioral_summary = df.groupby('behavioral_segment').agg({
-        'user_id': 'count',
-        'engagement_score': 'mean',
-        'total_revenue': ['mean', 'sum'],
-        'total_session_time_minutes': 'mean',
-        'days_since_first_event': 'mean'
+    daily_dir.mkdir(exist_ok=True)
+    cohort_dir.mkdir(exist_ok=True)
+    user_level_dir.mkdir(exist_ok=True)
+    
+    # 1. DAILY FILES
+    print("📊 Creating daily files...")
+    
+    # DAU by date
+    dau_by_date = df.groupby('date').agg({
+        'user_id': 'nunique',
+        'user_type': lambda x: (x == 'new').sum(),
+        'total_revenue': 'sum'
     }).round(3)
+    dau_by_date.columns = ['total_dau', 'new_users', 'total_revenue']
+    dau_by_date['returning_users'] = dau_by_date['total_dau'] - dau_by_date['new_users']
+    dau_by_date['new_user_percentage'] = (dau_by_date['new_users'] / dau_by_date['total_dau'] * 100).round(1)
+    dau_by_date['returning_user_percentage'] = (dau_by_date['returning_users'] / dau_by_date['total_dau'] * 100).round(1)
+    dau_by_date.to_csv(daily_dir / "dau_by_date.csv")
     
-    behavioral_summary.columns = ['user_count', 'avg_engagement_score', 'avg_revenue_per_user', 'total_revenue', 'avg_sessions', 'avg_days_since_active']
-    behavioral_summary['percentage_of_total'] = (behavioral_summary['user_count'] / len(df) * 100).round(1)
-    behavioral_summary['statistical_significance'] = [calculate_segment_confidence(df, 'behavioral_segment', seg) for seg in behavioral_summary.index]
-    behavioral_summary.to_csv(outputs_dir / "behavioral_segment_summary.csv")
+    # DAU by country
+    if 'country' in df.columns:
+        dau_by_country = df.groupby(['date', 'country']).agg({
+            'user_id': 'nunique',
+            'user_type': lambda x: (x == 'new').sum(),
+            'total_revenue': 'sum'
+        }).round(3)
+        dau_by_country.columns = ['total_dau', 'new_users', 'total_revenue']
+        dau_by_country['returning_users'] = dau_by_country['total_dau'] - dau_by_country['new_users']
+        dau_by_country['new_user_percentage'] = (dau_by_country['new_users'] / dau_by_country['total_dau'] * 100).round(1)
+        dau_by_country['returning_user_percentage'] = (dau_by_country['returning_users'] / dau_by_country['total_dau'] * 100).round(1)
+        dau_by_country.to_csv(daily_dir / "dau_by_country.csv")
     
-    # 3. Revenue segments
-    revenue_summary = df.groupby('revenue_segment').agg({
-        'user_id': 'count',
-        'total_revenue': ['mean', 'sum'],
+    # Revenue by date
+    revenue_by_date = df.groupby('date').agg({
+        'total_revenue': 'sum',
         'iap_revenue': 'sum',
         'ad_revenue': 'sum',
-        'subscription_revenue': 'sum'
+        'subscription_revenue': 'sum',
+        'user_id': 'nunique'
     }).round(3)
+    revenue_by_date.columns = ['total_revenue', 'iap_revenue', 'ad_revenue', 'subscription_revenue', 'revenue_users']
+    revenue_by_date['avg_revenue_per_user'] = (revenue_by_date['total_revenue'] / revenue_by_date['revenue_users']).round(3)
+    revenue_by_date.to_csv(daily_dir / "revenue_by_date.csv")
     
-    revenue_summary.columns = ['user_count', 'avg_revenue_per_user', 'total_revenue', 'iap_contribution', 'ad_contribution', 'subscription_contribution']
-    revenue_summary['percentage_of_total'] = (revenue_summary['user_count'] / len(df) * 100).round(1)
-    revenue_summary['statistical_significance'] = [calculate_segment_confidence(df, 'revenue_segment', seg) for seg in revenue_summary.index]
-    revenue_summary.to_csv(outputs_dir / "revenue_segment_summary.csv")
+    # Engagement by date
+    engagement_by_date = df.groupby('date').agg({
+        'engagement_score': 'mean',
+        'total_session_time_minutes': 'mean',
+        'total_events': 'mean',
+        'user_id': 'nunique'
+    }).round(3)
+    engagement_by_date.columns = ['avg_engagement_score', 'avg_session_time', 'avg_events', 'total_users']
+    engagement_by_date.to_csv(daily_dir / "engagement_by_date.csv")
     
-    # 4. User journey
+    # 2. COHORT FILES
+    print("📈 Creating cohort files...")
+    
+    # DAU by cohort date
+    dau_by_cohort = {}
+    for cohort_date, cohort_df in df.groupby('cohort_date'):
+        cohort_size = cohort_df['user_id'].nunique()
+        dau_by_cohort[cohort_date] = {'cohort_size': cohort_size}
+        
+        for window in [0, 1, 3, 7, 14, 30, 60]:
+            active_users = cohort_df[cohort_df['days_since_first_event'] == window]['user_id'].nunique()
+            dau_by_cohort[cohort_date][f'day_{window}_dau'] = active_users
+    
+    dau_by_cohort_df = pd.DataFrame.from_dict(dau_by_cohort, orient='index').reset_index()
+    dau_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+    dau_by_cohort_df.to_csv(cohort_dir / "dau_by_cohort_date.csv", index=False)
+    
+    # Revenue by cohort date
+    revenue_by_cohort = {}
+    for cohort_date, cohort_df in df.groupby('cohort_date'):
+        cohort_size = cohort_df['user_id'].nunique()
+        revenue_by_cohort[cohort_date] = {'cohort_size': cohort_size}
+        
+        for window in [0, 1, 3, 7, 14, 30, 60]:
+            day_revenue = cohort_df[cohort_df['days_since_first_event'] == window]['total_revenue'].sum()
+            revenue_by_cohort[cohort_date][f'day_{window}_revenue'] = round(day_revenue, 2)
+        
+        total_revenue = cohort_df.groupby('user_id')['total_revenue'].sum().sum()
+        revenue_by_cohort[cohort_date]['total_cohort_revenue'] = round(total_revenue, 2)
+    
+    revenue_by_cohort_df = pd.DataFrame.from_dict(revenue_by_cohort, orient='index').reset_index()
+    revenue_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+    revenue_by_cohort_df.to_csv(cohort_dir / "revenue_by_cohort_date.csv", index=False)
+    
+    # Engagement by cohort date
+    engagement_by_cohort = {}
+    for cohort_date, cohort_df in df.groupby('cohort_date'):
+        cohort_size = cohort_df['user_id'].nunique()
+        engagement_by_cohort[cohort_date] = {'cohort_size': cohort_size}
+        
+        for window in [0, 1, 7]:
+            day_data = cohort_df[cohort_df['days_since_first_event'] == window]
+            if len(day_data) > 0:
+                engagement_by_cohort[cohort_date][f'avg_engagement_score_day_{window}'] = round(day_data['engagement_score'].mean(), 3)
+                engagement_by_cohort[cohort_date][f'avg_sessions_day_{window}'] = round(day_data['total_session_time_minutes'].mean(), 1)
+            else:
+                engagement_by_cohort[cohort_date][f'avg_engagement_score_day_{window}'] = 0.0
+                engagement_by_cohort[cohort_date][f'avg_sessions_day_{window}'] = 0.0
+    
+    engagement_by_cohort_df = pd.DataFrame.from_dict(engagement_by_cohort, orient='index').reset_index()
+    engagement_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+    engagement_by_cohort_df.to_csv(cohort_dir / "engagement_by_cohort_date.csv", index=False)
+    
+    # Funnel by cohort date
     journey_df = calculate_user_journey(df)
-    journey_df.to_csv(outputs_dir / "user_journey_segments.csv", index=False)
+    funnel_by_cohort = {}
+    for cohort_date, cohort_df in df.groupby('cohort_date'):
+        cohort_size = cohort_df['user_id'].nunique()
+        cohort_journey = journey_df[journey_df['user_id'].isin(cohort_df['user_id'])]
+        
+        funnel_by_cohort[cohort_date] = {
+            'cohort_size': cohort_size,
+            'ftue_start_users': cohort_size,
+            'ftue_complete_users': len(cohort_journey[cohort_journey['journey_stage'] == 'ftue_complete']),
+            'level_1_users': len(cohort_journey[cohort_journey['journey_stage'] == 'level_1']),
+            'first_purchase_users': len(cohort_journey[cohort_journey['journey_stage'] == 'first_purchase'])
+        }
+        
+        # Calculate completion rates
+        funnel_by_cohort[cohort_date]['ftue_completion_rate'] = round(
+            funnel_by_cohort[cohort_date]['ftue_complete_users'] / cohort_size * 100, 1
+        )
+        funnel_by_cohort[cohort_date]['level_1_completion_rate'] = round(
+            funnel_by_cohort[cohort_date]['level_1_users'] / cohort_size * 100, 1
+        )
+        funnel_by_cohort[cohort_date]['purchase_rate'] = round(
+            funnel_by_cohort[cohort_date]['first_purchase_users'] / cohort_size * 100, 1
+        )
     
-    funnel_df = calculate_journey_funnel(df, journey_df)
-    funnel_df.to_csv(outputs_dir / "journey_funnel_analysis.csv", index=False)
+    funnel_by_cohort_df = pd.DataFrame.from_dict(funnel_by_cohort, orient='index').reset_index()
+    funnel_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+    funnel_by_cohort_df.to_csv(cohort_dir / "funnel_by_cohort_date.csv", index=False)
     
-    # 5. Segment definitions
+    # 3. USER LEVEL FILES
+    print("👤 Creating user level files...")
+    
+    # Revenue segments daily (user-daily level)
+    revenue_segments_daily = df[['date', 'user_id', 'device_id', 'cohort_date', 'revenue_segment', 
+                                'total_revenue', 'iap_revenue', 'ad_revenue', 'revenue_percentile']].copy()
+    revenue_segments_daily.to_csv(user_level_dir / "revenue_segments_daily.csv", index=False)
+    
+    # User journey cohort (cohort date level only)
+    journey_cohort = journey_df.merge(df[['user_id', 'cohort_date']].drop_duplicates(), on='user_id', how='left')
+    journey_cohort = journey_cohort[['cohort_date', 'user_id', 'device_id', 'journey_stage', 
+                                   'stage_completion_date', 'time_to_stage_days', 'stage_confidence']]
+    journey_cohort.to_csv(user_level_dir / "user_journey_cohort.csv", index=False)
+    
+    # 4. METADATA FILES
+    print("📋 Creating metadata files...")
+    
+    # Segment definitions
     with open(outputs_dir / "segment_definitions.json", 'w') as f:
         json.dump(segment_definitions, f, indent=2, default=str)
     
-    # 6. Analysis report
+    # Analysis report
     with open(outputs_dir / "segment_analysis_report.json", 'w') as f:
         json.dump(analysis_report, f, indent=2, default=str)
     
     print(f"✅ All segment outputs saved to: {outputs_dir}")
+    print(f"📁 Daily files: {daily_dir}")
+    print(f"📁 Cohort files: {cohort_dir}")
+    print(f"📁 User level files: {user_level_dir}")
 
 def main():
     """Main function for user segmentation."""

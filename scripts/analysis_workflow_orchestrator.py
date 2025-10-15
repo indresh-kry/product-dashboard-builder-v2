@@ -331,7 +331,10 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
             env.update({
                 'SEGMENTATION_MINIMUM_SAMPLE_SIZE': str(getattr(args, 'segmentation_minimum_sample_size', 30)),
                 'SEGMENTATION_SIGNIFICANCE_THRESHOLD': str(self.config.get('statistical_significance', 0.05)),
-                'SEGMENTATION_CONFIDENCE_THRESHOLD': str(self.config.get('confidence_threshold', 0.85))
+                'SEGMENTATION_CONFIDENCE_THRESHOLD': str(self.config.get('confidence_threshold', 0.85)),
+                'CONFIDENCE_SIZE_WEIGHT': str(getattr(args, 'confidence_size_weight', 0.4)),
+                'CONFIDENCE_VARIANCE_WEIGHT': str(getattr(args, 'confidence_variance_weight', 0.4)),
+                'CONFIDENCE_COMPLETENESS_WEIGHT': str(getattr(args, 'confidence_completeness_weight', 0.2))
             })
             
             # Execute the script
@@ -712,6 +715,12 @@ Examples:
     # Segmentation options
     parser.add_argument('--segmentation-minimum-sample-size', type=int, default=30,
                        help='Minimum sample size for segmentation (default: 30)')
+    parser.add_argument('--confidence-size-weight', type=float, default=0.4,
+                       help='Weight for size confidence in segment confidence calculation (default: 0.4)')
+    parser.add_argument('--confidence-variance-weight', type=float, default=0.4,
+                       help='Weight for variance confidence in segment confidence calculation (default: 0.4)')
+    parser.add_argument('--confidence-completeness-weight', type=float, default=0.2,
+                       help='Weight for completeness confidence in segment confidence calculation (default: 0.2)')
     
     # Execution options
     parser.add_argument('--continue-on-error', action='store_true',
