@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Enhanced Data Aggregation Script - Final Working Version
-Version: 3.0.0
-Last Updated: 2025-10-14
+Version: 3.1.0
+Last Updated: 2025-10-15
 
 Changelog:
+- v3.1.0 (2025-10-15): Fixed revenue classification logic to use name column with generic patterns
 - v3.0.0 (2025-10-14): Renamed from data_aggregation_enhanced_v2_final_working.py for cleaner versioning
 - v2.0.6 (2025-10-14): Fixed GROUP BY issues with proper aggregation functions
 - v2.0.5 (2025-10-14): Removed session count to eliminate SQL ambiguity
@@ -140,15 +141,59 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         SUM(CASE WHEN is_revenue_valid = true THEN converted_revenue ELSE 0 END) as total_revenue,
         SUM(CASE WHEN is_revenue_valid = true AND converted_currency = 'USD' THEN converted_revenue ELSE 0 END) as total_revenue_usd,
         
-        -- Revenue by Type (Enhanced Classification)
-        SUM(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%iap%' THEN converted_revenue ELSE 0 END) as iap_revenue,
-        SUM(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%ad%' THEN converted_revenue ELSE 0 END) as ad_revenue,
-        SUM(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%subscription%' THEN converted_revenue ELSE 0 END) as subscription_revenue,
+        -- Revenue by Type (Enhanced Generic Classification)
+        SUM(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%iap%' OR 
+            name LIKE '%purchase%' OR 
+            name LIKE '%buy%' OR
+            name LIKE '%inapp%' OR
+            name LIKE '%transaction%'
+        ) THEN converted_revenue ELSE 0 END) as iap_revenue,
         
-        -- Revenue Event Counts by Type
-        COUNT(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%iap%' THEN 1 END) as iap_events_count,
-        COUNT(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%ad%' THEN 1 END) as ad_events_count,
-        COUNT(CASE WHEN is_revenue_valid = true AND received_revenue_event LIKE '%subscription%' THEN 1 END) as subscription_events_count,
+        SUM(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%ad%' OR 
+            name LIKE '%ads%' OR 
+            name LIKE '%admon%' OR
+            name LIKE '%advertisement%' OR
+            name LIKE '%banner%' OR
+            name LIKE '%interstitial%' OR
+            name LIKE '%rewarded%'
+        ) THEN converted_revenue ELSE 0 END) as ad_revenue,
+        
+        SUM(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%sub%' OR 
+            name LIKE '%subscription%' OR 
+            name LIKE '%recurring%' OR
+            name LIKE '%premium%' OR
+            name LIKE '%pro%'
+        ) THEN converted_revenue ELSE 0 END) as subscription_revenue,
+        
+        -- Revenue Event Counts by Type (Enhanced Generic Classification)
+        COUNT(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%iap%' OR 
+            name LIKE '%purchase%' OR 
+            name LIKE '%buy%' OR
+            name LIKE '%inapp%' OR
+            name LIKE '%transaction%'
+        ) THEN 1 END) as iap_events_count,
+        
+        COUNT(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%ad%' OR 
+            name LIKE '%ads%' OR 
+            name LIKE '%admon%' OR
+            name LIKE '%advertisement%' OR
+            name LIKE '%banner%' OR
+            name LIKE '%interstitial%' OR
+            name LIKE '%rewarded%'
+        ) THEN 1 END) as ad_events_count,
+        
+        COUNT(CASE WHEN is_revenue_valid = true AND (
+            name LIKE '%sub%' OR 
+            name LIKE '%subscription%' OR 
+            name LIKE '%recurring%' OR
+            name LIKE '%premium%' OR
+            name LIKE '%pro%'
+        ) THEN 1 END) as subscription_events_count,
         COUNT(CASE WHEN is_revenue_valid = true THEN 1 END) as total_revenue_events_count,
         
         -- Revenue Timestamps
