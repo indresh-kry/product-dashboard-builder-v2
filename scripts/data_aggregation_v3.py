@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Enhanced Data Aggregation Script - Final Working Version
-Version: 3.1.0
+Version: 3.2.0
 Last Updated: 2025-10-15
 
 Changelog:
+- v3.2.0 (2025-10-15): Fixed case sensitivity in revenue classification patterns using UPPER() function
 - v3.1.0 (2025-10-15): Fixed revenue classification logic to use name column with generic patterns
 - v3.0.0 (2025-10-14): Renamed from data_aggregation_enhanced_v2_final_working.py for cleaner versioning
 - v2.0.6 (2025-10-14): Fixed GROUP BY issues with proper aggregation functions
@@ -143,21 +144,21 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         
         -- Revenue by Type (Enhanced Generic Classification)
         SUM(CASE WHEN is_revenue_valid = true AND (
-            name LIKE '%iap%' OR 
-            name LIKE '%purchase%' OR 
-            name LIKE '%buy%' OR
-            name LIKE '%inapp%' OR
-            name LIKE '%transaction%'
+            UPPER(name) LIKE '%IAP%' OR 
+            UPPER(name) LIKE '%PURCHASE%' OR 
+            UPPER(name) LIKE '%BUY%' OR
+            UPPER(name) LIKE '%INAPP%' OR
+            UPPER(name) LIKE '%TRANSACTION%'
         ) THEN converted_revenue ELSE 0 END) as iap_revenue,
         
         SUM(CASE WHEN is_revenue_valid = true AND (
-            name LIKE '%ad%' OR 
-            name LIKE '%ads%' OR 
-            name LIKE '%admon%' OR
-            name LIKE '%advertisement%' OR
-            name LIKE '%banner%' OR
-            name LIKE '%interstitial%' OR
-            name LIKE '%rewarded%'
+            UPPER(name) LIKE '%AD%' OR 
+            UPPER(name) LIKE '%ADS%' OR 
+            UPPER(name) LIKE '%ADMON%' OR
+            UPPER(name) LIKE '%ADVERTISEMENT%' OR
+            UPPER(name) LIKE '%BANNER%' OR
+            UPPER(name) LIKE '%INTERSTITIAL%' OR
+            UPPER(name) LIKE '%REWARDED%'
         ) THEN converted_revenue ELSE 0 END) as ad_revenue,
         
         SUM(CASE WHEN is_revenue_valid = true AND (
@@ -170,21 +171,21 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         
         -- Revenue Event Counts by Type (Enhanced Generic Classification)
         COUNT(CASE WHEN is_revenue_valid = true AND (
-            name LIKE '%iap%' OR 
-            name LIKE '%purchase%' OR 
-            name LIKE '%buy%' OR
-            name LIKE '%inapp%' OR
-            name LIKE '%transaction%'
+            UPPER(name) LIKE '%IAP%' OR 
+            UPPER(name) LIKE '%PURCHASE%' OR 
+            UPPER(name) LIKE '%BUY%' OR
+            UPPER(name) LIKE '%INAPP%' OR
+            UPPER(name) LIKE '%TRANSACTION%'
         ) THEN 1 END) as iap_events_count,
         
         COUNT(CASE WHEN is_revenue_valid = true AND (
-            name LIKE '%ad%' OR 
-            name LIKE '%ads%' OR 
-            name LIKE '%admon%' OR
-            name LIKE '%advertisement%' OR
-            name LIKE '%banner%' OR
-            name LIKE '%interstitial%' OR
-            name LIKE '%rewarded%'
+            UPPER(name) LIKE '%AD%' OR 
+            UPPER(name) LIKE '%ADS%' OR 
+            UPPER(name) LIKE '%ADMON%' OR
+            UPPER(name) LIKE '%ADVERTISEMENT%' OR
+            UPPER(name) LIKE '%BANNER%' OR
+            UPPER(name) LIKE '%INTERSTITIAL%' OR
+            UPPER(name) LIKE '%REWARDED%'
         ) THEN 1 END) as ad_events_count,
         
         COUNT(CASE WHEN is_revenue_valid = true AND (
