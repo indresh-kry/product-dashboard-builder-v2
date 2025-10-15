@@ -49,14 +49,20 @@ def load_schema_mapping(run_hash):
         return None
 
 def build_where_clause(app_filter, date_start, date_end):
-    """Build WHERE clause for SQL queries"""
+    """Build WHERE clause for SQL queries with extended date range for cohort assignment"""
     conditions = []
     
     if app_filter and app_filter.strip() and app_filter != 'ALL_APPS':
         conditions.append(f"app_longname = '{app_filter}'")
     
     if date_start and date_end and date_start.strip() and date_end.strip() and date_start != 'ALL_DATES' and date_end != 'ALL_DATES':
-        conditions.append(f"DATE(adjusted_timestamp) BETWEEN '{date_start}' AND '{date_end}'")
+        # Calculate extended start date (7 days prior to original start) for cohort assignment
+        from datetime import datetime, timedelta
+        start_date = datetime.strptime(date_start, '%Y-%m-%d')
+        extended_start = start_date - timedelta(days=7)
+        extended_start_str = extended_start.strftime('%Y-%m-%d')
+        
+        conditions.append(f"DATE(adjusted_timestamp) BETWEEN '{extended_start_str}' AND '{date_end}'")
     
     return "WHERE " + " AND ".join(conditions) if conditions else ""
 
@@ -263,6 +269,7 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         device_id,
         DATE(t.adjusted_timestamp),
         uc.cohort_date
+    HAVING DATE(ANY_VALUE(t.adjusted_timestamp)) BETWEEN '{date_start}' AND '{date_end}'
     ORDER BY 
         COALESCE({primary_user_id}, device_id),
         DATE(t.adjusted_timestamp)

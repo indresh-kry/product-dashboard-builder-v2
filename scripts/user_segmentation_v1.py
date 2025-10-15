@@ -394,6 +394,27 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
         dau_by_country['new_user_percentage'] = (dau_by_country['new_users'] / dau_by_country['total_dau'] * 100).round(1)
         dau_by_country['returning_user_percentage'] = (dau_by_country['returning_users'] / dau_by_country['total_dau'] * 100).round(1)
         dau_by_country.to_csv(daily_dir / "dau_by_country.csv")
+        
+        # Revenue by country (detailed)
+        revenue_by_country = df.groupby(['date', 'country']).agg({
+            'total_revenue': 'sum',
+            'iap_revenue': 'sum',
+            'ad_revenue': 'sum',
+            'subscription_revenue': 'sum',
+            'user_id': 'nunique'
+        }).round(3)
+        revenue_by_country.columns = ['total_revenue', 'iap_revenue', 'ad_revenue', 'subscription_revenue', 'revenue_users']
+        revenue_by_country['avg_revenue_per_user'] = (revenue_by_country['total_revenue'] / revenue_by_country['revenue_users']).round(3)
+        revenue_by_country.to_csv(daily_dir / "revenue_by_country.csv")
+        
+        # New logins by country
+        new_logins_by_country = df[df['user_type'] == 'new'].groupby(['date', 'country']).agg({
+            'user_id': 'nunique',
+            'total_revenue': 'sum'
+        }).round(3)
+        new_logins_by_country.columns = ['new_logins', 'new_user_revenue']
+        new_logins_by_country['avg_revenue_per_new_user'] = (new_logins_by_country['new_user_revenue'] / new_logins_by_country['new_logins']).round(3)
+        new_logins_by_country.to_csv(daily_dir / "new_logins_by_country.csv")
     
     # Revenue by date
     revenue_by_date = df.groupby('date').agg({
@@ -406,6 +427,28 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
     revenue_by_date.columns = ['total_revenue', 'iap_revenue', 'ad_revenue', 'subscription_revenue', 'revenue_users']
     revenue_by_date['avg_revenue_per_user'] = (revenue_by_date['total_revenue'] / revenue_by_date['revenue_users']).round(3)
     revenue_by_date.to_csv(daily_dir / "revenue_by_date.csv")
+    
+    # Revenue by type (detailed breakdown)
+    revenue_by_type = df.groupby(['date', 'revenue_segment']).agg({
+        'total_revenue': 'sum',
+        'iap_revenue': 'sum',
+        'ad_revenue': 'sum',
+        'subscription_revenue': 'sum',
+        'user_id': 'nunique'
+    }).round(3)
+    revenue_by_type.columns = ['total_revenue', 'iap_revenue', 'ad_revenue', 'subscription_revenue', 'revenue_users']
+    revenue_by_type['avg_revenue_per_user'] = (revenue_by_type['total_revenue'] / revenue_by_type['revenue_users']).round(3)
+    revenue_by_type.to_csv(daily_dir / "revenue_by_type.csv")
+    
+    # New logins by acquisition channel (if available)
+    if 'acquisition_channel' in df.columns:
+        new_logins_by_channel = df[df['user_type'] == 'new'].groupby(['date', 'acquisition_channel']).agg({
+            'user_id': 'nunique',
+            'total_revenue': 'sum'
+        }).round(3)
+        new_logins_by_channel.columns = ['new_logins', 'new_user_revenue']
+        new_logins_by_channel['avg_revenue_per_new_user'] = (new_logins_by_channel['new_user_revenue'] / new_logins_by_channel['new_logins']).round(3)
+        new_logins_by_channel.to_csv(daily_dir / "new_logins_by_channel.csv")
     
     # Engagement by date
     engagement_by_date = df.groupby('date').agg({
@@ -499,6 +542,41 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
     funnel_by_cohort_df = pd.DataFrame.from_dict(funnel_by_cohort, orient='index').reset_index()
     funnel_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
     funnel_by_cohort_df.to_csv(cohort_dir / "funnel_by_cohort_date.csv", index=False)
+    
+    # Revenue by cohort date and country
+    if 'country' in df.columns:
+        revenue_by_cohort_country = {}
+        for cohort_date, cohort_df in df.groupby('cohort_date'):
+            cohort_size = cohort_df['user_id'].nunique()
+            revenue_by_cohort_country[cohort_date] = {'cohort_size': cohort_size}
+            
+            for country, country_df in cohort_df.groupby('country'):
+                country_revenue = country_df.groupby('user_id')['total_revenue'].sum().sum()
+                country_users = country_df['user_id'].nunique()
+                revenue_by_cohort_country[cohort_date][f'{country}_revenue'] = round(country_revenue, 2)
+                revenue_by_cohort_country[cohort_date][f'{country}_users'] = country_users
+        
+        revenue_by_cohort_country_df = pd.DataFrame.from_dict(revenue_by_cohort_country, orient='index').reset_index()
+        revenue_by_cohort_country_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+        revenue_by_cohort_country_df.to_csv(cohort_dir / "revenue_by_cohort_country.csv", index=False)
+    
+    # Event funnel by cohort date (detailed)
+    event_funnel_by_cohort = {}
+    for cohort_date, cohort_df in df.groupby('cohort_date'):
+        cohort_size = cohort_df['user_id'].nunique()
+        event_funnel_by_cohort[cohort_date] = {'cohort_size': cohort_size}
+        
+        # Count users who completed each event type
+        for event_col in ['ftue_complete_time', 'level_1_time', 'level_2_time', 'level_3_time', 'level_4_time', 'level_5_time', 'level_6_time', 'level_7_time']:
+            if event_col in cohort_df.columns:
+                event_name = event_col.replace('_time', '')
+                completed_users = cohort_df[cohort_df[event_col].notna()]['user_id'].nunique()
+                event_funnel_by_cohort[cohort_date][f'{event_name}_users'] = completed_users
+                event_funnel_by_cohort[cohort_date][f'{event_name}_rate'] = round(completed_users / cohort_size * 100, 1)
+    
+    event_funnel_by_cohort_df = pd.DataFrame.from_dict(event_funnel_by_cohort, orient='index').reset_index()
+    event_funnel_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+    event_funnel_by_cohort_df.to_csv(cohort_dir / "event_funnel_by_cohort_date.csv", index=False)
     
     # 3. USER LEVEL FILES
     print("👤 Creating user level files...")
