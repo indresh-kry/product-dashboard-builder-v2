@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
 Analysis Workflow Orchestrator for Product Dashboard Builder v2
-Version: 1.0.0
-Last Updated: 2025-10-14
+Version: 1.1.0
+Last Updated: 2025-10-15
 
 This script serves as the central orchestrator for the entire analysis workflow,
 automatically executing all phases from system initialization through final reporting.
+
+Changelog:
+- v1.1.0 (2025-10-15): Added --raw-data-limit and --aggregation-limit command-line arguments
+- v1.0.0 (2025-10-14): Initial version with complete workflow orchestration
 
 Based on: analysis-workflow.md specification
 Dependencies: All phase scripts in scripts/ directory
@@ -116,8 +120,8 @@ export OPENAI_API_KEY='{base_env.get("OPENAI_API_KEY", "placeholder_openai_key")
 export HUGGINGFACE_API_KEY='{base_env.get("HUGGINGFACE_API_KEY", "placeholder_hf_key")}'
 export LLM_PROVIDER='{base_env.get("LLM_PROVIDER", "huggingface")}'
 export DATABASE_URL='{base_env.get("DATABASE_URL", "postgresql://user:password@localhost:5432/dbname")}'
-export RAW_DATA_LIMIT='{base_env.get("RAW_DATA_LIMIT", "10000")}'
-export AGGREGATION_LIMIT='{base_env.get("AGGREGATION_LIMIT", "1000")}'
+export RAW_DATA_LIMIT='{args.raw_data_limit if hasattr(args, "raw_data_limit") and args.raw_data_limit else base_env.get("RAW_DATA_LIMIT", "10000")}'
+export AGGREGATION_LIMIT='{args.aggregation_limit if hasattr(args, "aggregation_limit") and args.aggregation_limit else base_env.get("AGGREGATION_LIMIT", "1000")}'
 export TARGET_PROJECT='{base_env.get("TARGET_PROJECT", "gc-prod-459709")}'
 export TARGET_DATASET='{base_env.get("TARGET_DATASET", "nbs_dataset")}'
 export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_daily_aggregation")}'
@@ -661,6 +665,12 @@ Examples:
   # Focus on specific area
   python scripts/analysis_workflow_orchestrator.py --focus revenue
 
+  # Filtered analysis for specific app and date range
+  python scripts/analysis_workflow_orchestrator.py --app-filter com.nukebox.mandir --date-start 2025-09-01 --date-end 2025-09-07
+
+  # Analysis with custom data limits
+  python scripts/analysis_workflow_orchestrator.py --raw-data-limit 20000 --aggregation-limit 5000
+
   # Schema discovery only
   python scripts/analysis_workflow_orchestrator.py --mode schema-only
 
@@ -696,6 +706,12 @@ Examples:
                        help='Start date for filtering (YYYY-MM-DD)')
     parser.add_argument('--date-end', type=str,
                        help='End date for filtering (YYYY-MM-DD)')
+    
+    # Data processing options
+    parser.add_argument('--raw-data-limit', type=int, default=10000,
+                       help='Limit for raw data sampling (default: 10000)')
+    parser.add_argument('--aggregation-limit', type=int, default=1000,
+                       help='Limit for aggregation output rows (default: 1000)')
     
     # Execution options
     parser.add_argument('--continue-on-error', action='store_true',
