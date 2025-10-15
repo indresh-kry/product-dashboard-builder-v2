@@ -294,8 +294,8 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
             
             if success:
                 # Verify key outputs exist
-                aggregation_csv = Path(f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_enhanced_v2_final_working.csv")
-                summary_report = Path(f"run_logs/{run_hash}/outputs/aggregations/aggregation_summary_report_final_working.json")
+                aggregation_csv = Path(f"run_logs/{run_hash}/outputs/aggregations/aggregated_data.csv")
+                summary_report = Path(f"run_logs/{run_hash}/outputs/aggregations/aggregation_summary.json")
                 
                 if aggregation_csv.exists() and summary_report.exists():
                     self._log_phase_completion("Phase 2: Data Aggregation", run_hash, True)

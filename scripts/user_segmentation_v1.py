@@ -48,8 +48,8 @@ def load_aggregated_data(run_hash: str) -> pd.DataFrame:
     # Check for different possible CSV filenames
     possible_csv_files = [
         f"run_logs/{run_hash}/outputs/aggregations/aggregated_data.csv",
-        f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_enhanced_v2_final_working.csv",
-        f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_v3.csv"
+        f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_enhanced_v2_final_working.csv",  # Legacy support
+        f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_v3.csv"  # Legacy support
     ]
     
     for csv_path in possible_csv_files:
@@ -214,11 +214,13 @@ def calculate_retention_cohorts(df: pd.DataFrame) -> pd.DataFrame:
     print("📈 Calculating retention cohorts...")
     
     # Group by cohort date and calculate retention rates
-    retention_windows = [1, 3, 7, 14, 30, 60]
+    retention_windows = [0, 1, 3, 7, 14, 30, 60]
     
     cohort_data = []
     for cohort_date, cohort_df in df.groupby('cohort_date'):
-        cohort_size = len(cohort_df)
+        # Get unique users in this cohort (cohort size)
+        unique_users = cohort_df['user_id'].nunique()
+        cohort_size = unique_users
         
         if cohort_size < int(os.environ.get('SEGMENTATION_MINIMUM_SAMPLE_SIZE', 30)):
             continue
@@ -227,14 +229,15 @@ def calculate_retention_cohorts(df: pd.DataFrame) -> pd.DataFrame:
         retention_rates = {'cohort_date': cohort_date, 'cohort_size': cohort_size}
         
         for window in retention_windows:
-            # Users active within the window
-            active_users = cohort_df[cohort_df['days_since_first_event'] <= window]
-            retention_rate = len(active_users) / cohort_size * 100
+            # Users active on that specific day (days_since_first_event == window)
+            active_users_on_day = cohort_df[cohort_df['days_since_first_event'] == window]['user_id'].nunique()
+            retention_rate = (active_users_on_day / cohort_size) * 100
             retention_rates[f'day_{window}_retention'] = round(retention_rate, 1)
         
-        # Add revenue metrics
-        retention_rates['avg_revenue_per_user'] = round(cohort_df['total_revenue'].mean(), 3)
-        retention_rates['total_revenue'] = round(cohort_df['total_revenue'].sum(), 2)
+        # Add revenue metrics (per unique user)
+        cohort_revenue_df = cohort_df.groupby('user_id')['total_revenue'].sum()
+        retention_rates['avg_revenue_per_user'] = round(cohort_revenue_df.mean(), 3)
+        retention_rates['total_revenue'] = round(cohort_revenue_df.sum(), 2)
         
         # Calculate statistical significance (simplified)
         retention_rates['statistical_significance'] = round(min(0.99, cohort_size / 1000), 2)

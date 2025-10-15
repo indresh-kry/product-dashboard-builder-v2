@@ -406,19 +406,19 @@ def main():
         
         # Save query to working directory
         os.makedirs(working_dir, exist_ok=True)
-        with open(f'{working_dir}/aggregation_sql_enhanced_v2_final_working.sql', 'w') as f:
+        with open(f'{working_dir}/aggregation_query.sql', 'w') as f:
             f.write(query)
-        print(f"✅ SQL query saved to: {working_dir}/aggregation_sql_enhanced_v2_final_working.sql")
+        print(f"✅ SQL query saved to: {working_dir}/aggregation_query.sql")
         
         # Attempt to create BigQuery table
         table_created = create_bigquery_table(client, query, target_project, target_dataset, table_name)
         
         # Export to CSV (either as fallback or additional output)
-        csv_path = f'{outputs_dir}/user_daily_aggregation_enhanced_v2_final_working.csv'
+        csv_path = f'{outputs_dir}/aggregated_data.csv'
         export_to_csv(client, query, csv_path)
         
         # Generate summary report
-        summary_path = f'{outputs_dir}/aggregation_summary_report_final_working.json'
+        summary_path = f'{outputs_dir}/aggregation_summary.json'
         generate_summary_report(schema_mapping, summary_path, success=True, table_created=table_created)
         
         print("\n🎉 Enhanced Data Aggregation v2.0.6 (Final Working) completed successfully!")
