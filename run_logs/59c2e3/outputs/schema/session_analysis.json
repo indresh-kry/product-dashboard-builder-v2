@@ -1,0 +1,21 @@
+{
+  "session_id": {
+    "non_null_count": 5000,
+    "unique_count": 1445,
+    "null_percentage": 0.0
+  },
+  "adjusted_timestamp": {
+    "non_null_count": 5000,
+    "unique_count": 4481,
+    "null_percentage": 0.0
+  },
+  "session_events": {
+    "__SESSION__": 955
+  },
+  "duration_calculation_strategy": {
+    "method": "timestamp_based",
+    "description": "Calculate session duration using MIN/MAX adjusted_timestamp per session_id per date",
+    "formula": "session_duration = MAX(adjusted_timestamp) - MIN(adjusted_timestamp) WHERE session_id = X AND DATE(adjusted_timestamp) = Y",
+    "fallback": "Use 30-minute default timeout if no session end detected"
+  }
+}

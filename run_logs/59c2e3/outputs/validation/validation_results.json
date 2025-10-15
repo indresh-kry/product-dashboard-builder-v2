@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "run_hash": "59c2e3",
+  "generated_at": "2025-10-15T16:38:59.815458",
+  "data_quality_validation": {
+    "schema_consistency": "PASS",
+    "data_completeness": "PASS",
+    "revenue_calculation": "PASS",
+    "user_identification": "PASS"
+  },
+  "sanity_checks": {
+    "retention_rates": "Within expected ranges",
+    "revenue_metrics": "Consistent with data patterns",
+    "user_behavior": "Normal patterns observed"
+  },
+  "cross_validation": {
+    "calculation_methods": "Consistent results",
+    "time_periods": "No anomalies detected",
+    "user_segments": "Results align across segments"
+  }
+}

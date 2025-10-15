@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "run_hash": "59c2e3",
+  "generated_at": "2025-10-15T16:38:37.368343",
+  "summary": {
+    "total_users": 42739,
+    "total_segments_created": 8,
+    "data_quality_score": 0.761,
+    "statistical_significance_rate": 0.92
+  },
+  "segment_performance": {
+    "behavioral_segments": {
+      "high_engagement": {
+        "count": 12823,
+        "percentage": 30.0
+      },
+      "moderate_engagement": {
+        "count": 17607,
+        "percentage": 41.2
+      },
+      "low_engagement": {
+        "count": 9339,
+        "percentage": 21.9
+      },
+      "churned": {
+        "count": 2970,
+        "percentage": 6.9
+      }
+    },
+    "revenue_segments": {
+      "dolphin": {
+        "count": 6560,
+        "percentage": 15.3,
+        "revenue_share": 11.8
+      },
+      "free_user": {
+        "count": 25589,
+        "percentage": 59.9,
+        "revenue_share": 0.0
+      },
+      "minnow": {
+        "count": 8452,
+        "percentage": 19.8,
+        "revenue_share": 2.0
+      },
+      "whale": {
+        "count": 2138,
+        "percentage": 5.0,
+        "revenue_share": 86.2
+      }
+    }
+  }
+}

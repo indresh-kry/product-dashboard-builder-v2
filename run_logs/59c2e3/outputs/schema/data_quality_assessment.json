@@ -1,0 +1,473 @@
+{
+  "overall_score": 96.15,
+  "column_metrics": {
+    "etl_record_processing_hour_utc": {
+      "non_null_count": 5000,
+      "unique_count": 31,
+      "null_percentage": 0.0,
+      "data_type": "datetime64[us, UTC]"
+    },
+    "device_id": {
+      "non_null_count": 5000,
+      "unique_count": 1102,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "device_id_type": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "platform": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "adjusted_timestamp": {
+      "non_null_count": 5000,
+      "unique_count": 4481,
+      "null_percentage": 0.0,
+      "data_type": "datetime64[us, UTC]"
+    },
+    "adjusted_timestamp_unix_utc": {
+      "non_null_count": 5000,
+      "unique_count": 4489,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "app_longname": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "app_version": {
+      "non_null_count": 5000,
+      "unique_count": 11,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "arguments": {
+      "non_null_count": 5000,
+      "unique_count": 1306,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "converted_currency": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "converted_revenue": {
+      "non_null_count": 5000,
+      "unique_count": 91,
+      "null_percentage": 0.0,
+      "data_type": "float64"
+    },
+    "currency": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "custom_user_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "name": {
+      "non_null_count": 5000,
+      "unique_count": 15,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "os_version": {
+      "non_null_count": 5000,
+      "unique_count": 11,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "ip": {
+      "non_null_count": 5000,
+      "unique_count": 1231,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "product_category": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "product_name": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "product_price": {
+      "non_null_count": 0,
+      "unique_count": 0,
+      "null_percentage": 100.0,
+      "data_type": "float64"
+    },
+    "product_quantity": {
+      "non_null_count": 0,
+      "unique_count": 0,
+      "null_percentage": 100.0,
+      "data_type": "float64"
+    },
+    "product_sku": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "revenue": {
+      "non_null_count": 5000,
+      "unique_count": 1305,
+      "null_percentage": 0.0,
+      "data_type": "float64"
+    },
+    "server_timestamp": {
+      "non_null_count": 5000,
+      "unique_count": 4446,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "server_timestamp_unix_utc": {
+      "non_null_count": 5000,
+      "unique_count": 4446,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "session_id": {
+      "non_null_count": 5000,
+      "unique_count": 1445,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "gaid": {
+      "non_null_count": 5000,
+      "unique_count": 1046,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "gaid_md5": {
+      "non_null_count": 5000,
+      "unique_count": 1046,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "gaid_sha_1": {
+      "non_null_count": 5000,
+      "unique_count": 1046,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "idfa": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "idfa_md5": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "idfa_sha_1": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "waid": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "idfv": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "android_id": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "android_id_md5": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "android_id_sha_1": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "attribution_event_timestamp": {
+      "non_null_count": 5000,
+      "unique_count": 1098,
+      "null_percentage": 0.0,
+      "data_type": "datetime64[us, UTC]"
+    },
+    "attribution_event_timestamp_unix_utc": {
+      "non_null_count": 5000,
+      "unique_count": 1098,
+      "null_percentage": 0.0,
+      "data_type": "float64"
+    },
+    "is_fingerprinted": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "boolean"
+    },
+    "is_reengagement": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0,
+      "data_type": "boolean"
+    },
+    "is_view_through": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "boolean"
+    },
+    "city": {
+      "non_null_count": 5000,
+      "unique_count": 182,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "country": {
+      "non_null_count": 5000,
+      "unique_count": 8,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "install_source": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "state": {
+      "non_null_count": 5000,
+      "unique_count": 34,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "touchpoint_timestamp": {
+      "non_null_count": 5000,
+      "unique_count": 1098,
+      "null_percentage": 0.0,
+      "data_type": "datetime64[us, UTC]"
+    },
+    "touchpoint_timestamp_unix_utc": {
+      "non_null_count": 5000,
+      "unique_count": 1098,
+      "null_percentage": 0.0,
+      "data_type": "float64"
+    },
+    "tag_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "passthrough": {
+      "non_null_count": 5000,
+      "unique_count": 206,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "partner": {
+      "non_null_count": 5000,
+      "unique_count": 6,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "affiliate_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "affiliate_name": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "bid_type": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "campaign_id": {
+      "non_null_count": 5000,
+      "unique_count": 5,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "campaign_name": {
+      "non_null_count": 5000,
+      "unique_count": 5,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "click_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "creative_id": {
+      "non_null_count": 5000,
+      "unique_count": 18,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "creative_name": {
+      "non_null_count": 5000,
+      "unique_count": 15,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "publisher_concatenated": {
+      "non_null_count": 5000,
+      "unique_count": 8,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "publisher_hashed_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "publisher_id": {
+      "non_null_count": 5000,
+      "unique_count": 3,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "publisher_name": {
+      "non_null_count": 5000,
+      "unique_count": 5,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "sub_campaign_id": {
+      "non_null_count": 5000,
+      "unique_count": 17,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "sub_campaign_name": {
+      "non_null_count": 5000,
+      "unique_count": 17,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "sub_publisher_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "sub_publisher_name": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "singular_campaign_name": {
+      "non_null_count": 5000,
+      "unique_count": 5,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "tracker_name": {
+      "non_null_count": 5000,
+      "unique_count": 17,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "banner_name": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "received_revenue": {
+      "non_null_count": 2,
+      "unique_count": 2,
+      "null_percentage": 99.96000000000001,
+      "data_type": "float64"
+    },
+    "received_revenue_event": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "is_revenue_receipt_included": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0,
+      "data_type": "boolean"
+    },
+    "is_revenue_valid": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0,
+      "data_type": "boolean"
+    },
+    "utm_term": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "utm_medium": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "utm_campaign": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "utm_source": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    },
+    "utm_content": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "data_type": "object"
+    }
+  }
+}

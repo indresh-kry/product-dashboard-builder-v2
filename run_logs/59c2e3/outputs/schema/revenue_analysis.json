@@ -1,0 +1,36 @@
+{
+  "converted_revenue": {
+    "non_null_count": 5000,
+    "unique_count": 91,
+    "null_percentage": 0.0
+  },
+  "revenue": {
+    "non_null_count": 5000,
+    "unique_count": 1305,
+    "null_percentage": 0.0
+  },
+  "received_revenue": {
+    "non_null_count": 2,
+    "unique_count": 2,
+    "null_percentage": 99.96000000000001
+  },
+  "converted_currency": {
+    "non_null_count": 5000,
+    "unique_count": 1,
+    "null_percentage": 0.0
+  },
+  "is_revenue_valid": {
+    "non_null_count": 5000,
+    "unique_count": 2,
+    "null_percentage": 0.0
+  },
+  "received_revenue_event": {
+    "non_null_count": 5000,
+    "unique_count": 2,
+    "null_percentage": 0.0
+  },
+  "revenue_event_classification": {
+    "": "other",
+    "__iap__": "iap"
+  }
+}

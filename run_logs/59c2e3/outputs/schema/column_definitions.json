@@ -1,0 +1,470 @@
+[
+  {
+    "name": "etl_record_processing_hour_utc",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "device_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "device_id_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "platform",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "adjusted_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "adjusted_timestamp_unix_utc",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "app_longname",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "app_version",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "arguments",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "converted_currency",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "converted_revenue",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "currency",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "custom_user_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "os_version",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "ip",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "product_category",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "product_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "product_price",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "product_quantity",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "product_sku",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "revenue",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "server_timestamp",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "server_timestamp_unix_utc",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "session_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "gaid",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "gaid_md5",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "gaid_sha_1",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "idfa",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "idfa_md5",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "idfa_sha_1",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "waid",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "idfv",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "android_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "android_id_md5",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "android_id_sha_1",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "attribution_event_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "attribution_event_timestamp_unix_utc",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "is_fingerprinted",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "is_reengagement",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "is_view_through",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "city",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "country",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "install_source",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "state",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "touchpoint_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "touchpoint_timestamp_unix_utc",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "tag_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "passthrough",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "partner",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "affiliate_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "affiliate_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "bid_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "campaign_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "campaign_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "click_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "creative_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "creative_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "publisher_concatenated",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "publisher_hashed_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "publisher_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "publisher_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "sub_campaign_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "sub_campaign_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "sub_publisher_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "sub_publisher_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "singular_campaign_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "tracker_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "banner_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "received_revenue",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "received_revenue_event",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "is_revenue_receipt_included",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "is_revenue_valid",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "utm_term",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "utm_medium",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "utm_campaign",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "utm_source",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  },
+  {
+    "name": "utm_content",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "No description available"
+  }
+]

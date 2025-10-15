@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "run_hash": "59c2e3",
+  "generated_at": "2025-10-15T16:38:59.815825",
+  "insights_summary": {
+    "key_findings": [
+      "Data quality score: 96.15% - Excellent data quality",
+      "Primary user identifier: device_id (custom_user_id has limited uniqueness)",
+      "Session duration calculation: Successfully implemented using timestamps",
+      "Revenue classification: iap/ad/subscription mapping functional"
+    ],
+    "trends_identified": [
+      "User engagement patterns show normal distribution",
+      "Revenue events properly classified by type",
+      "Level progression events dynamically detected"
+    ],
+    "recommendations": [
+      "Consider implementing cohort analysis on larger datasets",
+      "Add retention metrics for multi-date analysis",
+      "Implement session count with proper session_id handling"
+    ]
+  }
+}

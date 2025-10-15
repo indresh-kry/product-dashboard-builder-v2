@@ -1,0 +1,35 @@
+Analysis Workflow Run 59c2e3 - File Index
+Generated: 2025-10-15T16:38:59.816191
+
+## Output Files
+- raw_data/sampled_raw_data.csv
+- schema/user_identification.json
+- schema/session_analysis.json
+- schema/event_taxonomy.json
+- schema/schema_mapping.json
+- schema/column_definitions.json
+- schema/data_quality_assessment.json
+- schema/revenue_analysis.json
+- aggregations/aggregated_data.csv
+- aggregations/aggregation_summary.json
+- segments/segment_analysis_report.json
+- segments/segment_definitions.json
+- segments/daily/new_logins_by_channel.csv
+- segments/daily/dau_by_date.csv
+- segments/daily/revenue_by_country.csv
+- segments/daily/revenue_by_date.csv
+- segments/daily/dau_by_country.csv
+- segments/daily/engagement_by_date.csv
+- segments/daily/revenue_by_type.csv
+- segments/daily/new_logins_by_country.csv
+- segments/cohort/engagement_by_cohort_date.csv
+- segments/cohort/event_funnel_by_cohort_date.csv
+- segments/cohort/revenue_by_cohort_country.csv
+- segments/cohort/funnel_by_cohort_date.csv
+- segments/cohort/dau_by_cohort_date.csv
+- segments/cohort/revenue_by_cohort_date.csv
+- segments/user_level/user_journey_cohort.csv
+- segments/user_level/revenue_segments_daily.csv
+- validation/validation_results.json
+- reports/run_summary.md
+- reports/insights_summary.json

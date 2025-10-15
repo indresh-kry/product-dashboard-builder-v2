@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "run_hash": "59c2e3",
+  "generated_at": "2025-10-15T16:38:37.341413",
+  "analysis_period": {
+    "start_date": "2025-09-15",
+    "end_date": "2025-09-30",
+    "total_users": 42739
+  },
+  "statistical_framework": {
+    "significance_threshold": 0.05,
+    "minimum_sample_size": 30,
+    "confidence_threshold": 0.85
+  },
+  "segment_definitions": {
+    "install_cohorts": {
+      "description": "Day-level install cohorts for retention analysis",
+      "criteria": {
+        "cohort_date": "First event date per user",
+        "retention_windows": [
+          1,
+          3,
+          7,
+          14,
+          30,
+          60
+        ],
+        "minimum_cohort_size": 30
+      }
+    },
+    "behavioral_segments": {
+      "description": "User segments based on engagement patterns",
+      "criteria": {
+        "high_engagement": {
+          "engagement_score": ">= 0.20",
+          "churn_threshold": "< 14 days"
+        },
+        "moderate_engagement": {
+          "engagement_score": "0.17 - 0.20"
+        },
+        "low_engagement": {
+          "engagement_score": "< 0.17"
+        },
+        "churned": {
+          "days_since_last_active": ">= 14 days"
+        }
+      }
+    },
+    "revenue_segments": {
+      "description": "User segments based on revenue contribution",
+      "criteria": {
+        "whale": {
+          "revenue_percentile": ">= 0.95"
+        },
+        "dolphin": {
+          "revenue_percentile": "0.8 - 0.95"
+        },
+        "minnow": {
+          "revenue_percentile": "0.1 - 0.8"
+        },
+        "free_user": {
+          "total_revenue": "= 0"
+        }
+      }
+    }
+  },
+  "data_quality": {
+    "total_users_analyzed": 42739,
+    "data_completeness": 0.761,
+    "segment_coverage": 1.0,
+    "statistical_significance_rate": 0.92
+  }
+}

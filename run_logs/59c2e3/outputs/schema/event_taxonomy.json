@@ -1,0 +1,20 @@
+{
+  "total_unique_events": 15,
+  "event_counts": {
+    "__ADMON_USER_LEVEL_REVENUE__": 1589,
+    "ad_watch": 1266,
+    "__SESSION__": 955,
+    "div_level_1": 415,
+    "ftue_complete": 405,
+    "div_level_2": 159,
+    "div_level_3": 70,
+    "div_level_4": 34,
+    "div_level_5": 24,
+    "div_level_7": 19,
+    "div_level_6": 19,
+    "div_level_9": 19,
+    "div_level_8": 16,
+    "game_complete": 8,
+    "__iap__": 2
+  }
+}

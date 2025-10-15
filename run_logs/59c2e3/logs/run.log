@@ -1,0 +1,23 @@
+Run 59c2e3 started at 2025-10-15T16:37:26.782485
+Dataset: gc-prod-459709.nbs_dataset.singular_user_level_event_data
+Mode: full
+Arguments: {'quick': False, 'focus': None, 'skip_schema': False, 'mode': 'full', 'validate_only': False, 'resume': None, 'app_filter': 'com.nukebox.mandir', 'date_start': '2025-09-15', 'date_end': '2025-09-30', 'raw_data_limit': 5000, 'aggregation_limit': 100000, 'segmentation_minimum_sample_size': 30, 'confidence_size_weight': 0.4, 'confidence_variance_weight': 0.4, 'confidence_completeness_weight': 0.2, 'continue_on_error': False, 'dry_run': False}
+2025-10-15T16:37:29.372659 - Phase 0: System Initialization SUCCESS: 
+
+2025-10-15T16:37:29.372806 - Starting Phase 1: Schema Discovery
+2025-10-15T16:37:47.895329 - Phase 1: Schema Discovery SUCCESS: 
+
+2025-10-15T16:37:47.896208 - Starting Phase 2: Data Aggregation
+2025-10-15T16:38:35.451571 - Phase 2: Data Aggregation SUCCESS: 
+
+2025-10-15T16:38:35.452104 - Starting Phase 3: User Segmentation
+2025-10-15T16:38:59.815079 - Phase 3: User Segmentation SUCCESS: User segments created successfully
+
+2025-10-15T16:38:59.815425 - Starting Phase 4: Quality Assurance
+2025-10-15T16:38:59.815751 - Phase 4: Quality Assurance SUCCESS: Placeholder implementation
+
+2025-10-15T16:38:59.815807 - Starting Phase 5: LLM Insights Generation
+2025-10-15T16:38:59.815975 - Phase 5: LLM Insights Generation SUCCESS: Placeholder implementation
+
+2025-10-15T16:38:59.816024 - Starting Phase 6: Final Reporting
+2025-10-15T16:38:59.817984 - Phase 6: Final Reporting SUCCESS: 

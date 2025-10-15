@@ -1,0 +1,1079 @@
+{
+  "run_hash": "59c2e3",
+  "timestamp": "2025-10-15T16:37:47.686699",
+  "dataset_name": "gc-prod-459709.nbs_dataset.singular_user_level_event_data",
+  "filters": {
+    "app_filter": "com.nukebox.mandir",
+    "date_start": "2025-09-15",
+    "date_end": "2025-09-30"
+  },
+  "schema": {
+    "total_columns": 78,
+    "columns": [
+      {
+        "name": "etl_record_processing_hour_utc",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "device_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "device_id_type",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "platform",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "adjusted_timestamp",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "adjusted_timestamp_unix_utc",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "app_longname",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "app_version",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "arguments",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "converted_currency",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "converted_revenue",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "currency",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "custom_user_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "os_version",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "ip",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "product_category",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "product_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "product_price",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "product_quantity",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "product_sku",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "revenue",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "server_timestamp",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "server_timestamp_unix_utc",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "session_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "gaid",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "gaid_md5",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "gaid_sha_1",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "idfa",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "idfa_md5",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "idfa_sha_1",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "waid",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "idfv",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "android_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "android_id_md5",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "android_id_sha_1",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "attribution_event_timestamp",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "attribution_event_timestamp_unix_utc",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "is_fingerprinted",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "is_reengagement",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "is_view_through",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "city",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "country",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "install_source",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "state",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "touchpoint_timestamp",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "touchpoint_timestamp_unix_utc",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "tag_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "passthrough",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "partner",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "affiliate_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "affiliate_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "bid_type",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "campaign_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "campaign_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "click_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "creative_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "creative_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "publisher_concatenated",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "publisher_hashed_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "publisher_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "publisher_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "sub_campaign_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "sub_campaign_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "sub_publisher_id",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "sub_publisher_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "singular_campaign_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "tracker_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "banner_name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "received_revenue",
+        "type": "FLOAT",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "received_revenue_event",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "is_revenue_receipt_included",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "is_revenue_valid",
+        "type": "BOOLEAN",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "utm_term",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "utm_medium",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "utm_campaign",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "utm_source",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      },
+      {
+        "name": "utm_content",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "No description available"
+      }
+    ]
+  },
+  "events": {
+    "total_unique_events": 15,
+    "event_counts": {
+      "__ADMON_USER_LEVEL_REVENUE__": 1589,
+      "ad_watch": 1266,
+      "__SESSION__": 955,
+      "div_level_1": 415,
+      "ftue_complete": 405,
+      "div_level_2": 159,
+      "div_level_3": 70,
+      "div_level_4": 34,
+      "div_level_5": 24,
+      "div_level_7": 19,
+      "div_level_6": 19,
+      "div_level_9": 19,
+      "div_level_8": 16,
+      "game_complete": 8,
+      "__iap__": 2
+    }
+  },
+  "user_identification": {
+    "custom_user_id": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "quality_issues": [
+        "Only 1 unique value - not suitable as user identifier"
+      ],
+      "recommended_for_aggregation": false
+    },
+    "device_id": {
+      "non_null_count": 5000,
+      "unique_count": 1102,
+      "null_percentage": 0.0,
+      "quality_issues": [],
+      "recommended_for_aggregation": "True"
+    },
+    "gaid": {
+      "non_null_count": 5000,
+      "unique_count": 1046,
+      "null_percentage": 0.0,
+      "quality_issues": [],
+      "recommended_for_aggregation": "True"
+    },
+    "idfa": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0,
+      "quality_issues": [
+        "Only 1 unique value - not suitable as user identifier"
+      ],
+      "recommended_for_aggregation": false
+    }
+  },
+  "revenue_analysis": {
+    "converted_revenue": {
+      "non_null_count": 5000,
+      "unique_count": 91,
+      "null_percentage": 0.0
+    },
+    "revenue": {
+      "non_null_count": 5000,
+      "unique_count": 1305,
+      "null_percentage": 0.0
+    },
+    "received_revenue": {
+      "non_null_count": 2,
+      "unique_count": 2,
+      "null_percentage": 99.96000000000001
+    },
+    "converted_currency": {
+      "non_null_count": 5000,
+      "unique_count": 1,
+      "null_percentage": 0.0
+    },
+    "is_revenue_valid": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0
+    },
+    "received_revenue_event": {
+      "non_null_count": 5000,
+      "unique_count": 2,
+      "null_percentage": 0.0
+    },
+    "revenue_event_classification": {
+      "": "other",
+      "__iap__": "iap"
+    }
+  },
+  "session_analysis": {
+    "session_id": {
+      "non_null_count": 5000,
+      "unique_count": 1445,
+      "null_percentage": 0.0
+    },
+    "adjusted_timestamp": {
+      "non_null_count": 5000,
+      "unique_count": 4481,
+      "null_percentage": 0.0
+    },
+    "session_events": {
+      "__SESSION__": 955
+    },
+    "duration_calculation_strategy": {
+      "method": "timestamp_based",
+      "description": "Calculate session duration using MIN/MAX adjusted_timestamp per session_id per date",
+      "formula": "session_duration = MAX(adjusted_timestamp) - MIN(adjusted_timestamp) WHERE session_id = X AND DATE(adjusted_timestamp) = Y",
+      "fallback": "Use 30-minute default timeout if no session end detected"
+    }
+  },
+  "data_quality": {
+    "overall_score": 96.15,
+    "column_metrics": {
+      "etl_record_processing_hour_utc": {
+        "non_null_count": 5000,
+        "unique_count": 31,
+        "null_percentage": 0.0,
+        "data_type": "datetime64[us, UTC]"
+      },
+      "device_id": {
+        "non_null_count": 5000,
+        "unique_count": 1102,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "device_id_type": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "platform": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "adjusted_timestamp": {
+        "non_null_count": 5000,
+        "unique_count": 4481,
+        "null_percentage": 0.0,
+        "data_type": "datetime64[us, UTC]"
+      },
+      "adjusted_timestamp_unix_utc": {
+        "non_null_count": 5000,
+        "unique_count": 4489,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "app_longname": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "app_version": {
+        "non_null_count": 5000,
+        "unique_count": 11,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "arguments": {
+        "non_null_count": 5000,
+        "unique_count": 1306,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "converted_currency": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "converted_revenue": {
+        "non_null_count": 5000,
+        "unique_count": 91,
+        "null_percentage": 0.0,
+        "data_type": "float64"
+      },
+      "currency": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "custom_user_id": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "name": {
+        "non_null_count": 5000,
+        "unique_count": 15,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "os_version": {
+        "non_null_count": 5000,
+        "unique_count": 11,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "ip": {
+        "non_null_count": 5000,
+        "unique_count": 1231,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "product_category": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "product_name": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "product_price": {
+        "non_null_count": 0,
+        "unique_count": 0,
+        "null_percentage": 100.0,
+        "data_type": "float64"
+      },
+      "product_quantity": {
+        "non_null_count": 0,
+        "unique_count": 0,
+        "null_percentage": 100.0,
+        "data_type": "float64"
+      },
+      "product_sku": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "revenue": {
+        "non_null_count": 5000,
+        "unique_count": 1305,
+        "null_percentage": 0.0,
+        "data_type": "float64"
+      },
+      "server_timestamp": {
+        "non_null_count": 5000,
+        "unique_count": 4446,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "server_timestamp_unix_utc": {
+        "non_null_count": 5000,
+        "unique_count": 4446,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "session_id": {
+        "non_null_count": 5000,
+        "unique_count": 1445,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "gaid": {
+        "non_null_count": 5000,
+        "unique_count": 1046,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "gaid_md5": {
+        "non_null_count": 5000,
+        "unique_count": 1046,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "gaid_sha_1": {
+        "non_null_count": 5000,
+        "unique_count": 1046,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "idfa": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "idfa_md5": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "idfa_sha_1": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "waid": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "idfv": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "android_id": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "android_id_md5": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "android_id_sha_1": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "attribution_event_timestamp": {
+        "non_null_count": 5000,
+        "unique_count": 1098,
+        "null_percentage": 0.0,
+        "data_type": "datetime64[us, UTC]"
+      },
+      "attribution_event_timestamp_unix_utc": {
+        "non_null_count": 5000,
+        "unique_count": 1098,
+        "null_percentage": 0.0,
+        "data_type": "float64"
+      },
+      "is_fingerprinted": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "boolean"
+      },
+      "is_reengagement": {
+        "non_null_count": 5000,
+        "unique_count": 2,
+        "null_percentage": 0.0,
+        "data_type": "boolean"
+      },
+      "is_view_through": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "boolean"
+      },
+      "city": {
+        "non_null_count": 5000,
+        "unique_count": 182,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "country": {
+        "non_null_count": 5000,
+        "unique_count": 8,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "install_source": {
+        "non_null_count": 5000,
+        "unique_count": 2,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "state": {
+        "non_null_count": 5000,
+        "unique_count": 34,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "touchpoint_timestamp": {
+        "non_null_count": 5000,
+        "unique_count": 1098,
+        "null_percentage": 0.0,
+        "data_type": "datetime64[us, UTC]"
+      },
+      "touchpoint_timestamp_unix_utc": {
+        "non_null_count": 5000,
+        "unique_count": 1098,
+        "null_percentage": 0.0,
+        "data_type": "float64"
+      },
+      "tag_id": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "passthrough": {
+        "non_null_count": 5000,
+        "unique_count": 206,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "partner": {
+        "non_null_count": 5000,
+        "unique_count": 6,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "affiliate_id": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "affiliate_name": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "bid_type": {
+        "non_null_count": 5000,
+        "unique_count": 2,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "campaign_id": {
+        "non_null_count": 5000,
+        "unique_count": 5,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "campaign_name": {
+        "non_null_count": 5000,
+        "unique_count": 5,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "click_id": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "creative_id": {
+        "non_null_count": 5000,
+        "unique_count": 18,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "creative_name": {
+        "non_null_count": 5000,
+        "unique_count": 15,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "publisher_concatenated": {
+        "non_null_count": 5000,
+        "unique_count": 8,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "publisher_hashed_id": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "publisher_id": {
+        "non_null_count": 5000,
+        "unique_count": 3,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "publisher_name": {
+        "non_null_count": 5000,
+        "unique_count": 5,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "sub_campaign_id": {
+        "non_null_count": 5000,
+        "unique_count": 17,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "sub_campaign_name": {
+        "non_null_count": 5000,
+        "unique_count": 17,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "sub_publisher_id": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "sub_publisher_name": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "singular_campaign_name": {
+        "non_null_count": 5000,
+        "unique_count": 5,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "tracker_name": {
+        "non_null_count": 5000,
+        "unique_count": 17,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "banner_name": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "received_revenue": {
+        "non_null_count": 2,
+        "unique_count": 2,
+        "null_percentage": 99.96000000000001,
+        "data_type": "float64"
+      },
+      "received_revenue_event": {
+        "non_null_count": 5000,
+        "unique_count": 2,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "is_revenue_receipt_included": {
+        "non_null_count": 5000,
+        "unique_count": 2,
+        "null_percentage": 0.0,
+        "data_type": "boolean"
+      },
+      "is_revenue_valid": {
+        "non_null_count": 5000,
+        "unique_count": 2,
+        "null_percentage": 0.0,
+        "data_type": "boolean"
+      },
+      "utm_term": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "utm_medium": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "utm_campaign": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "utm_source": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      },
+      "utm_content": {
+        "non_null_count": 5000,
+        "unique_count": 1,
+        "null_percentage": 0.0,
+        "data_type": "object"
+      }
+    }
+  },
+  "recommendations": {
+    "primary_user_id": "device_id",
+    "primary_revenue_column": "converted_revenue",
+    "timestamp_column": "adjusted_timestamp",
+    "session_duration_calculation": {
+      "method": "timestamp_based",
+      "description": "Calculate session duration using MIN/MAX adjusted_timestamp per session_id per date",
+      "formula": "session_duration = MAX(adjusted_timestamp) - MIN(adjusted_timestamp) WHERE session_id = X AND DATE(adjusted_timestamp) = Y",
+      "fallback": "Use 30-minute default timeout if no session end detected"
+    },
+    "user_id_issues": []
+  }
+}

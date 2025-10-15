@@ -1,0 +1,34 @@
+{
+  "custom_user_id": {
+    "non_null_count": 5000,
+    "unique_count": 1,
+    "null_percentage": 0.0,
+    "quality_issues": [
+      "Only 1 unique value - not suitable as user identifier"
+    ],
+    "recommended_for_aggregation": false
+  },
+  "device_id": {
+    "non_null_count": 5000,
+    "unique_count": 1102,
+    "null_percentage": 0.0,
+    "quality_issues": [],
+    "recommended_for_aggregation": "True"
+  },
+  "gaid": {
+    "non_null_count": 5000,
+    "unique_count": 1046,
+    "null_percentage": 0.0,
+    "quality_issues": [],
+    "recommended_for_aggregation": "True"
+  },
+  "idfa": {
+    "non_null_count": 5000,
+    "unique_count": 1,
+    "null_percentage": 0.0,
+    "quality_issues": [
+      "Only 1 unique value - not suitable as user identifier"
+    ],
+    "recommended_for_aggregation": false
+  }
+}

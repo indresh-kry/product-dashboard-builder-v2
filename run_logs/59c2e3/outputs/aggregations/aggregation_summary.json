@@ -1,0 +1,26 @@
+{
+  "run_hash": "59c2e3",
+  "timestamp": "2025-10-15T16:38:35.388124",
+  "status": "success",
+  "table_created": false,
+  "data_quality_summary": {
+    "overall_score": 96.15,
+    "user_identification_issues": [],
+    "primary_user_id": "device_id",
+    "substitute_used": "none"
+  },
+  "aggregation_features": {
+    "session_duration_calculation": "implemented",
+    "session_count": "removed_to_eliminate_ambiguity",
+    "revenue_classification": "implemented",
+    "dynamic_level_fields": "implemented",
+    "cohort_analysis": "basic_implementation",
+    "retention_metrics": "not_implemented"
+  },
+  "recommendations": {
+    "user_identification": "No issues identified",
+    "cohort_analysis": "Implement on larger datasets with multi-date analysis",
+    "retention_metrics": "Implement when running on larger datasets with historical data",
+    "session_count": "Can be added back later with proper session_id handling"
+  }
+}
