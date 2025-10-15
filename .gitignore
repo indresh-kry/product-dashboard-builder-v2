@@ -52,3 +52,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Script backups - do not commit
+scripts/script_backups/
