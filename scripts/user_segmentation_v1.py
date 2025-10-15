@@ -45,11 +45,18 @@ def load_aggregated_data(run_hash: str) -> pd.DataFrame:
     print("📊 Loading aggregated data from Phase 2...")
     
     # Try to load from CSV first (most common case)
-    csv_path = Path(f"run_logs/{run_hash}/outputs/aggregations/aggregated_data.csv")
-    if csv_path.exists():
-        df = pd.read_csv(csv_path)
-        print(f"✅ Loaded {len(df)} rows from CSV")
-        return df
+    # Check for different possible CSV filenames
+    possible_csv_files = [
+        f"run_logs/{run_hash}/outputs/aggregations/aggregated_data.csv",
+        f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_enhanced_v2_final_working.csv",
+        f"run_logs/{run_hash}/outputs/aggregations/user_daily_aggregation_v3.csv"
+    ]
+    
+    for csv_path in possible_csv_files:
+        if Path(csv_path).exists():
+            df = pd.read_csv(csv_path)
+            print(f"✅ Loaded {len(df)} rows from CSV: {csv_path}")
+            return df
     
     # Try to load from BigQuery table if CSV doesn't exist
     try:
@@ -96,13 +103,20 @@ def calculate_engagement_score(df: pd.DataFrame) -> pd.Series:
     }
     
     # Normalize each metric to 0-1 scale
-    session_freq_norm = (df['total_sessions'] - df['total_sessions'].min()) / (df['total_sessions'].max() - df['total_sessions'].min())
+    # Use total_session_time_minutes as proxy for session frequency
+    session_freq_norm = (df['total_session_time_minutes'] - df['total_session_time_minutes'].min()) / (df['total_session_time_minutes'].max() - df['total_session_time_minutes'].min())
     duration_norm = (df['avg_session_duration_minutes'] - df['avg_session_duration_minutes'].min()) / (df['avg_session_duration_minutes'].max() - df['avg_session_duration_minutes'].min())
     event_freq_norm = (df['total_events'] - df['total_events'].min()) / (df['total_events'].max() - df['total_events'].min())
     
     # Calculate recency score (more recent = higher score)
-    max_days = df['days_since_last_active'].max() if df['days_since_last_active'].max() > 0 else 1
-    recency_norm = 1 - (df['days_since_last_active'] / max_days)
+    # Use days_since_first_event as proxy for recency (lower = more recent activity)
+    if 'days_since_last_active' in df.columns:
+        max_days = df['days_since_last_active'].max() if df['days_since_last_active'].max() > 0 else 1
+        recency_norm = 1 - (df['days_since_last_active'] / max_days)
+    else:
+        # Use days_since_first_event as proxy (inverse relationship)
+        max_days = df['days_since_first_event'].max() if df['days_since_first_event'].max() > 0 else 1
+        recency_norm = 1 - (df['days_since_first_event'] / max_days)
     
     # Weighted combination
     engagement_score = (
@@ -151,7 +165,9 @@ def calculate_behavioral_segments(df: pd.DataFrame) -> pd.DataFrame:
     churn_threshold = int(os.environ.get('CHURN_DAYS_THRESHOLD', 14))
     
     def assign_behavioral_segment(row):
-        if row['days_since_last_active'] >= churn_threshold:
+        # Use days_since_first_event as proxy for churn (higher = older users, potentially churned)
+        days_since_active = row.get('days_since_last_active', row.get('days_since_first_event', 0))
+        if days_since_active >= churn_threshold:
             return 'churned'
         elif row['engagement_score'] >= high_threshold:
             return 'high_engagement'
@@ -189,7 +205,7 @@ def calculate_segment_confidence(df: pd.DataFrame, segment_column: str, segment_
     size_confidence = min(1.0, sample_size / 100)  # 100+ users = full confidence
     completeness_confidence = max(0.0, data_completeness)
     
-    overall_confidence = (size_confidence * 0.4 + completeness_confidence * 0.4 + variance_confidence * 0.2)
+    overall_confidence = (size_confidence * 0.4 + variance_confidence * 0.4 + completeness_confidence * 0.2)
     
     return round(overall_confidence, 2)
 
@@ -342,8 +358,8 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
         'user_id': 'count',
         'engagement_score': 'mean',
         'total_revenue': ['mean', 'sum'],
-        'total_sessions': 'mean',
-        'days_since_last_active': 'mean'
+        'total_session_time_minutes': 'mean',
+        'days_since_first_event': 'mean'
     }).round(3)
     
     behavioral_summary.columns = ['user_count', 'avg_engagement_score', 'avg_revenue_per_user', 'total_revenue', 'avg_sessions', 'avg_days_since_active']

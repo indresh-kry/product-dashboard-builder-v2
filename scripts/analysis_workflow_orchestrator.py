@@ -335,13 +335,13 @@ export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_dai
             })
             
             # Execute the script
-            result = self._execute_script(script_path, env)
+            success, output = self._execute_script(script_path, run_hash, "Phase 3: User Segmentation")
             
-            if result.returncode == 0:
+            if success:
                 self._log_phase_completion("Phase 3: User Segmentation", run_hash, True, "User segments created successfully")
                 return True
             else:
-                self._log_phase_completion("Phase 3: User Segmentation", run_hash, False, f"Script failed with return code {result.returncode}")
+                self._log_phase_completion("Phase 3: User Segmentation", run_hash, False, f"Script failed: {output}")
                 return False
             
         except Exception as e:
