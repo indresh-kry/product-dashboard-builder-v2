@@ -26,12 +26,13 @@ python scripts/analysis_workflow_orchestrator.py --app-filter com.nukebox.mandir
 
 **New to the codebase?** Start here to understand how the system works:
 
-### 🔍 [Script Documentation](./workflow_guidelines/script_summary/)
+### 🔍 [Script Documentation](./scripts/script_summary/)
 
-The `workflow_guidelines/script_summary/` directory contains comprehensive documentation for all active scripts, including:
+The `scripts/script_summary/` directory contains comprehensive documentation for all active scripts, including:
 
 - **Function overviews** with parameters and descriptions
 - **External tools and APIs** used by each script
+- **Variables & Configuration** organized by source (input, env, hardcoded, computed)
 - **Mermaid flow diagrams** showing function call sequences
 - **Usage examples** and command-line options
 - **Dependencies** and environment variables
@@ -39,11 +40,12 @@ The `workflow_guidelines/script_summary/` directory contains comprehensive docum
 
 #### Available Script Documentation:
 
-- **[Analysis Workflow Orchestrator](./workflow_guidelines/script_summary/analysis_workflow_orchestrator.md)** - Central orchestrator managing the entire workflow (17 functions)
-- **[System Health Check](./workflow_guidelines/script_summary/system_health_check.md)** - Environment validation and BigQuery connection testing (5 functions)
-- **[Schema Discovery v3](./workflow_guidelines/script_summary/schema_discovery_v3.md)** - Enhanced schema discovery with session/revenue analysis (14 functions)
-- **[Data Aggregation v3](./workflow_guidelines/script_summary/data_aggregation_v3.md)** - Final working data aggregation with comprehensive metrics (9 functions)
-- **[Rules Engine Integration](./workflow_guidelines/script_summary/rules_engine_integration.md)** - Business logic validation and rule processing (9 functions)
+- **[Analysis Workflow Orchestrator](./scripts/script_summary/analysis_workflow_orchestrator.md)** - Central orchestrator managing the entire workflow (17 functions)
+- **[System Health Check](./scripts/script_summary/system_health_check.md)** - Environment validation and BigQuery connection testing (5 functions)
+- **[Schema Discovery v3](./scripts/script_summary/schema_discovery_v3.md)** - Enhanced schema discovery with session/revenue analysis (14 functions)
+- **[Data Aggregation v3](./scripts/script_summary/data_aggregation_v3.md)** - Final working data aggregation with comprehensive metrics (9 functions)
+- **[User Segmentation v1](./scripts/script_summary/user_segmentation_v1.md)** - User segmentation with behavioral and revenue analysis (12 functions)
+- **[Rules Engine Integration](./scripts/script_summary/rules_engine_integration.md)** - Business logic validation and rule processing (9 functions)
 
 ### 📋 [Workflow Guidelines](./workflow_guidelines/)
 

@@ -65,6 +65,7 @@ These documents should be updated when:
 
 - **[analysis-workflow.md](../analysis-workflow.md)**: Detailed workflow execution guide
 - **[scripts/](../scripts/)**: Implementation of the guidelines in code
+- **[scripts/script_summary/](../scripts/script_summary/)**: Comprehensive script documentation with tools and variables
 - **[backlog.md](../backlog.md)**: Future improvements and enhancements
 
 ---
