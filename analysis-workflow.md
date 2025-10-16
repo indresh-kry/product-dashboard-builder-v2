@@ -647,7 +647,7 @@ Return validation summary and quality assurance report."
 
 Use the Task tool to launch a general-purpose agent:
 
-"Generate AI-powered insights from metric tables.
+"Generate AI-powered insights from metric tables and reports.
 Run hash: ${RUN_HASH}
 Load all metric tables from run_logs/${RUN_HASH}/outputs/aggregations/
 Load benchmark data from scripts/benchmark_data.json (dummy data for now)
@@ -714,11 +714,11 @@ source run_logs/${RUN_HASH}/.env && python3 run_logs/${RUN_HASH}/working/script_
 
 Return insights summary and recommendations."
 
-### Phase 6: Final Reporting and Organization
+### Phase 6: Final Report Generation
 
 Use the Task tool to launch a general-purpose agent:
 
-"Organize and summarize all outputs from run ${RUN_HASH}.
+"Generate comprehensive final reports and organize all outputs from run ${RUN_HASH}.
 Run hash: ${RUN_HASH}
 
 CRITICAL PATH REQUIREMENTS:

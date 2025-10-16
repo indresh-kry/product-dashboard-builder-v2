@@ -370,15 +370,15 @@ Knowledge Base Update
 - **Processing**: Quality assurance and validation
 - **Output**: Validated results and quality reports
 
-#### 5. Report Generation
-- **Input**: Validated results
-- **Processing**: Report generation as data tables
-- **Output**: Final reports and data tables
-
-#### 6. LLM Insights Generation
+#### 5. LLM Insights Generation
 - **Input**: Metric tables + benchmark data
 - **Processing**: AI-powered insight generation and interpretation
 - **Output**: Insights, recommendations, and gap analysis
+
+#### 6. Final Report Generation
+- **Input**: Validated results + insights
+- **Processing**: Report generation as data tables
+- **Output**: Final reports and data tables
 
 #### 7. Knowledge Accumulation
 - **Input**: All analysis results
