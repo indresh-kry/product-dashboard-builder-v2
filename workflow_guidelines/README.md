@@ -6,7 +6,14 @@ This directory contains the core documentation and guidelines for the Product Da
 
 ### 📋 **Core Documentation**
 
-1. **[REPOSITORY_STRUCTURE_AND_RULES.md](./REPOSITORY_STRUCTURE_AND_RULES.md)**
+1. **[project_specification.md](./project_specification.md)**
+   - Project background and objectives
+   - Detailed system summary and workflow
+   - Use cases and user personas
+   - Current implementation status
+   - Future development roadmap
+
+2. **[REPOSITORY_STRUCTURE_AND_RULES.md](./REPOSITORY_STRUCTURE_AND_RULES.md)**
    - Repository structure and organization
    - Key rules and patterns for development
    - Environment variable management
@@ -14,7 +21,7 @@ This directory contains the core documentation and guidelines for the Product Da
    - Statistical rigor requirements
    - Memory and learning system guidelines
 
-2. **[high-level-design.md](./high-level-design.md)**
+3. **[high-level-design.md](./high-level-design.md)**
    - System architecture and design principles
    - Component specifications and interfaces
    - Data flow architecture
@@ -23,13 +30,13 @@ This directory contains the core documentation and guidelines for the Product Da
    - Technology stack
    - Implementation roadmap
 
-3. **[sequenceDiagram.md](./sequenceDiagram.md)**
+4. **[sequenceDiagram.md](./sequenceDiagram.md)**
    - Core orchestration flow
    - Component interactions
    - Data flow sequence
    - System workflow visualization
 
-4. **[data_aggregation_table_structure.md](./data_aggregation_table_structure.md)**
+5. **[data_aggregation_table_structure.md](./data_aggregation_table_structure.md)**
    - Primary data aggregation table structure
    - User ID x Date basis organization
    - Field definitions and data quality rules
