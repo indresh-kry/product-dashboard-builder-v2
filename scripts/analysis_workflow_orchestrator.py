@@ -113,6 +113,14 @@ class AnalysisWorkflowOrchestrator:
                 except Exception as e:
                     print(f"Warning: Could not load OpenAI API key from creds.json: {e}")
         
+        # Set BigQuery safety configuration
+        base_env.update({
+            'BIGQUERY_READ_ONLY_MODE': 'true',
+            'BIGQUERY_ALLOWED_DATASETS': 'analysis_results,temp_tables,user_analysis,dashboard_data,reporting,segments',
+            'BIGQUERY_ENABLE_LOGGING': 'true',
+            'BIGQUERY_ENABLE_AUDIT': 'true'
+        })
+        
         # Set default column mappings (can be overridden in .env)
         env_content = f"""export RUN_HASH={run_hash}
 export DATASET_NAME='{base_env.get("DATASET_NAME", "gc-prod-459709.nbs_dataset.singular_user_level_event_data")}'

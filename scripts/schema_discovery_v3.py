@@ -32,14 +32,34 @@ from datetime import datetime
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+# Import safety module
+try:
+    from bigquery_safety import get_safe_bigquery_client, validate_environment_safety, BigQuerySafetyError
+except ImportError:
+    print("⚠️ Warning: BigQuery safety module not found. Running without safety guards.")
+    get_safe_bigquery_client = None
+    validate_environment_safety = None
+    BigQuerySafetyError = Exception
+
 def get_bigquery_client():
-    """Initialize BigQuery client with credentials"""
-    credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+    """Initialize BigQuery client with credentials and safety guards"""
+    # Validate environment safety first
+    if validate_environment_safety and not validate_environment_safety():
+        raise RuntimeError("Environment safety validation failed. Check BIGQUERY_READ_ONLY_MODE setting.")
     
-    credentials = service_account.Credentials.from_service_account_file(credentials_path)
-    client = bigquery.Client(credentials=credentials, project=project_id)
-    return client
+    # Use safe client if available, fallback to regular client
+    if get_safe_bigquery_client:
+        dataset_name = os.environ.get('DATASET_NAME', '')
+        source_dataset = dataset_name.split('.')[-1] if '.' in dataset_name else dataset_name
+        return get_safe_bigquery_client(source_dataset)
+    else:
+        # Fallback to regular client (for backward compatibility)
+        credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+        
+        credentials = service_account.Credentials.from_service_account_file(credentials_path)
+        client = bigquery.Client(credentials=credentials, project=project_id)
+        return client
 
 def build_where_clause(app_filter, date_start, date_end):
     """Build WHERE clause for SQL queries"""

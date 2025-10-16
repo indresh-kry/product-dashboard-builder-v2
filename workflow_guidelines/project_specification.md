@@ -13,7 +13,7 @@ Create an automated data analysis system that transforms raw user interaction da
 - Automatically discover and understand data structure
 - Generate comprehensive product metrics and user segments
 - Provide AI-powered insights and recommendations
-- Deliver results in formats suitable for different stakeholders
+- Deliver results in data tables handy for further analysis
 
 ## Detailed Summary
 
@@ -93,6 +93,7 @@ Each phase builds upon the previous one, ensuring data quality and providing inc
 - "Identify opportunities for product improvements"
 - "Understand user journey bottlenecks"
 - "Validate feature impact and adoption"
+- "Suggest data enrichment opportunities"
 
 ## User Personas
 
@@ -112,16 +113,6 @@ Each phase builds upon the previous one, ensuring data quality and providing inc
 - **Needs**: High-level insights, strategic recommendations, performance summaries
 - **Pain Points**: Too much technical detail, lack of actionable insights
 - **Goals**: Make strategic decisions, understand business performance
-
-### Secondary Users
-
-**Marketing Teams**
-- **Needs**: User acquisition insights, channel performance, campaign effectiveness
-- **Goals**: Optimize marketing spend, improve user acquisition
-
-**Engineering Teams**
-- **Needs**: Technical performance metrics, system health indicators
-- **Goals**: Ensure system reliability, optimize performance
 
 ## Current Implementation
 
@@ -179,10 +170,10 @@ Each phase builds upon the previous one, ensuring data quality and providing inc
 - Business logic validation
 
 **AI-Powered Insights (Phase 5)**
+- Annotation of raw data to build context over iterations
 - Automated trend identification
 - Anomaly detection and alerting
 - Predictive analytics for user behavior
-- Intelligent recommendation generation
 
 **Advanced Reporting (Phase 6)**
 - Executive dashboard creation
@@ -190,7 +181,7 @@ Each phase builds upon the previous one, ensuring data quality and providing inc
 - Custom report templates
 - Interactive data visualization
 
-### Advanced Features
+### Advanced Features (later versions)
 
 **Enhanced Analytics**
 - Machine learning-based user prediction
@@ -209,20 +200,6 @@ Each phase builds upon the previous one, ensuring data quality and providing inc
 - Real-time data streaming
 - Advanced caching mechanisms
 - Multi-tenant architecture
-
-### Integration Opportunities
-
-**External Systems**
-- Integration with popular analytics platforms
-- API endpoints for third-party tools
-- Webhook support for real-time notifications
-- Export to business intelligence tools
-
-**Data Sources**
-- Support for additional data formats
-- Real-time data ingestion
-- Multi-source data fusion
-- Historical data backfill capabilities
 
 ---
 

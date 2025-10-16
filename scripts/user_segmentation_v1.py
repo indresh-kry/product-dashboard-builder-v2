@@ -37,6 +37,15 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+
+# Import safety module
+try:
+    from bigquery_safety import get_safe_bigquery_client, validate_environment_safety, BigQuerySafetyError
+except ImportError:
+    print("⚠️ Warning: BigQuery safety module not found. Running without safety guards.")
+    get_safe_bigquery_client = None
+    validate_environment_safety = None
+    BigQuerySafetyError = Exception
 from typing import Dict, List, Tuple, Optional
 from scipy import stats
 

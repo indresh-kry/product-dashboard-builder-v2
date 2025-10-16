@@ -29,6 +29,15 @@ from typing import Dict, List, Optional, Tuple
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+# Import safety module
+try:
+    from bigquery_safety import get_safe_bigquery_client, validate_environment_safety, BigQuerySafetyError
+except ImportError:
+    print("⚠️ Warning: BigQuery safety module not found. Running without safety guards.")
+    get_safe_bigquery_client = None
+    validate_environment_safety = None
+    BigQuerySafetyError = Exception
+
 
 @dataclass
 class CheckReport:

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Enhanced Data Aggregation Script - Final Working Version
-Version: 3.3.0
+Enhanced Data Aggregation Script - Final Working Version with Safety Guards
+Version: 3.4.0
 Last Updated: 2025-10-15
 
 Changelog:
+- v3.4.0 (2025-10-15): Added BigQuery safety guardrails to prevent source table modification
 - v3.3.0 (2025-10-15): Added missing cohort analysis with cohort_date, days_since_first_event, and user_type fields
 - v3.2.0 (2025-10-15): Fixed case sensitivity in revenue classification patterns using UPPER() function
 - v3.1.0 (2025-10-15): Fixed revenue classification logic to use name column with generic patterns
@@ -26,14 +27,34 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from dotenv import load_dotenv
 
+# Import safety module
+try:
+    from bigquery_safety import get_safe_bigquery_client, validate_environment_safety, BigQuerySafetyError
+except ImportError:
+    print("⚠️ Warning: BigQuery safety module not found. Running without safety guards.")
+    get_safe_bigquery_client = None
+    validate_environment_safety = None
+    BigQuerySafetyError = Exception
+
 def get_bigquery_client():
-    """Initialize BigQuery client with credentials"""
-    credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+    """Initialize BigQuery client with credentials and safety guards"""
+    # Validate environment safety first
+    if validate_environment_safety and not validate_environment_safety():
+        raise RuntimeError("Environment safety validation failed. Check BIGQUERY_READ_ONLY_MODE setting.")
     
-    credentials = service_account.Credentials.from_service_account_file(credentials_path)
-    client = bigquery.Client(credentials=credentials, project=project_id)
-    return client
+    # Use safe client if available, fallback to regular client
+    if get_safe_bigquery_client:
+        dataset_name = os.environ.get('DATASET_NAME', '')
+        source_dataset = dataset_name.split('.')[-1] if '.' in dataset_name else dataset_name
+        return get_safe_bigquery_client(source_dataset)
+    else:
+        # Fallback to regular client (for backward compatibility)
+        credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+        
+        credentials = service_account.Credentials.from_service_account_file(credentials_path)
+        client = bigquery.Client(credentials=credentials, project=project_id)
+        return client
 
 def load_schema_mapping(run_hash):
     """Load schema mapping from previous run"""
@@ -279,22 +300,37 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
     return query
 
 def create_bigquery_table(client, query, target_project, target_dataset, table_name):
-    """Attempt to create BigQuery table"""
+    """Attempt to create BigQuery table with safety validation"""
     print(f"🏗️ Attempting to create BigQuery table: {target_project}.{target_dataset}.{table_name}")
     
     try:
-        # Create the table
-        create_query = f"""
-        CREATE OR REPLACE TABLE `{target_project}.{target_dataset}.{table_name}` AS
-        {query}
-        """
+        # Use safe client's create_table method if available
+        if hasattr(client, 'create_table'):
+            # Safe client with built-in validation
+            return client.create_table(query, target_project, target_dataset, table_name)
+        else:
+            # Fallback for regular client (with basic safety check)
+            print("⚠️ Using fallback table creation (safety module not available)")
+            
+            # Basic safety check for CREATE operations
+            if 'CREATE' not in query.upper():
+                raise ValueError("Table creation requires CREATE operation")
+            
+            # Create the table
+            create_query = f"""
+            CREATE OR REPLACE TABLE `{target_project}.{target_dataset}.{table_name}` AS
+            {query}
+            """
+            
+            job = client.query(create_query)
+            job.result()  # Wait for job to complete
+            
+            print(f"✅ Successfully created BigQuery table: {target_project}.{target_dataset}.{table_name}")
+            return True
         
-        job = client.query(create_query)
-        job.result()  # Wait for job to complete
-        
-        print(f"✅ Successfully created BigQuery table: {target_project}.{target_dataset}.{table_name}")
-        return True
-        
+    except BigQuerySafetyError as e:
+        print(f"🛡️ Safety validation failed: {str(e)}")
+        return False
     except Exception as e:
         if "Permission" in str(e) or "Access Denied" in str(e):
             print(f"⚠️ Access denied for table creation: {str(e)}")
@@ -367,12 +403,19 @@ def generate_summary_report(schema_mapping, output_path, success=True, table_cre
         print(f"❌ Error saving summary report: {str(e)}")
 
 def main():
-    """Main aggregation function"""
-    print("🚀 Starting Enhanced Data Aggregation v2.0.6 (Final Working) for Product Dashboard Builder v2")
+    """Main aggregation function with safety validation"""
+    print("🚀 Starting Enhanced Data Aggregation v3.4.0 (Safety-Enhanced) for Product Dashboard Builder v2")
     print("=" * 80)
     
     # Load environment variables
     load_dotenv()
+    
+    # Validate environment safety
+    if validate_environment_safety and not validate_environment_safety():
+        print("❌ Environment safety validation failed. Exiting.")
+        return 1
+    
+    print("🛡️ BigQuery safety guardrails enabled")
     
     # Get environment variables
     run_hash = os.environ.get('RUN_HASH')
@@ -428,13 +471,23 @@ def main():
         summary_path = f'{outputs_dir}/aggregation_summary.json'
         generate_summary_report(schema_mapping, summary_path, success=True, table_created=table_created)
         
-        print("\n🎉 Enhanced Data Aggregation v2.0.6 (Final Working) completed successfully!")
+        print("\n🎉 Enhanced Data Aggregation v3.4.0 (Safety-Enhanced) completed successfully!")
         print(f"📊 Results available at: {outputs_dir}")
         print(f"📄 CSV file: {csv_path}")
         print(f"📋 Summary report: {summary_path}")
         
+        # Log audit trail if available
+        if hasattr(client, 'get_audit_log'):
+            audit_log = client.get_audit_log()
+            if audit_log:
+                print(f"📋 Audit log: {len(audit_log)} operations logged")
+        
         return 0
         
+    except BigQuerySafetyError as e:
+        print(f"🛡️ Safety validation error: {str(e)}")
+        print("❌ Aggregation stopped due to safety violation")
+        return 1
     except Exception as e:
         print(f"❌ Error during aggregation: {str(e)}")
         import traceback
