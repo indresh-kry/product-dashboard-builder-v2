@@ -4,6 +4,8 @@ This document tracks future improvements and enhancements for the analysis workf
 
 ## Critical items 
 - [ ] **Create spec for project
+- [ ] **Add description generated via LLM to enrich data further
+- [ ] **
 
 ## High Priority Items
 

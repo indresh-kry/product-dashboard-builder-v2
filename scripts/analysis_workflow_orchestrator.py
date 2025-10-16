@@ -100,6 +100,19 @@ class AnalysisWorkflowOrchestrator:
                         key, value = line.split('=', 1)
                         base_env[key] = value
         
+        # Load OpenAI API key from creds.json if not in .env
+        if 'OPENAI_API_KEY' not in base_env or base_env['OPENAI_API_KEY'] == 'your_openai_api_key_here':
+            creds_path = base_env.get("GOOGLE_APPLICATION_CREDENTIALS", "/Users/indresh/GR-Repo-Local/product-dashboard-builder-v2/creds.json")
+            if Path(creds_path).exists():
+                try:
+                    import json
+                    with open(creds_path, 'r') as f:
+                        creds = json.load(f)
+                        if 'openai_api_key' in creds and creds['openai_api_key'] != 'your_openai_api_key_here':
+                            base_env['OPENAI_API_KEY'] = creds['openai_api_key']
+                except Exception as e:
+                    print(f"Warning: Could not load OpenAI API key from creds.json: {e}")
+        
         # Set default column mappings (can be overridden in .env)
         env_content = f"""export RUN_HASH={run_hash}
 export DATASET_NAME='{base_env.get("DATASET_NAME", "gc-prod-459709.nbs_dataset.singular_user_level_event_data")}'

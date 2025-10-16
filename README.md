@@ -10,7 +10,21 @@ This system provides end-to-end automated analysis of clickstream data, from sch
 
 - Python 3.9+
 - Google Cloud credentials for BigQuery access
+- OpenAI API key for LLM insights generation
 - Required Python packages (see dependencies below)
+
+### 🔑 API Key Setup
+
+**OpenAI API Key Configuration:**
+1. Add your OpenAI API key to `creds.json`:
+   ```json
+   {
+     "openai_api_key": "sk-your-actual-openai-api-key-here"
+   }
+   ```
+2. The system will automatically load the key for Phase 5 (LLM Insights Generation)
+
+**Security Note:** The `creds.json` file is in `.gitignore` to prevent accidental commits of sensitive credentials.
 
 ### Basic Usage
 
