@@ -146,6 +146,12 @@ export AGGREGATION_LIMIT='{args.aggregation_limit if hasattr(args, "aggregation_
 export TARGET_PROJECT='{base_env.get("TARGET_PROJECT", "gc-prod-459709")}'
 export TARGET_DATASET='{base_env.get("TARGET_DATASET", "nbs_dataset")}'
 export AGGREGATION_TABLE_NAME='{base_env.get("AGGREGATION_TABLE_NAME", "user_daily_aggregation")}'
+
+# BigQuery Safety Configuration
+export BIGQUERY_READ_ONLY_MODE='{base_env.get("BIGQUERY_READ_ONLY_MODE", "true")}'
+export BIGQUERY_ALLOWED_DATASETS='{base_env.get("BIGQUERY_ALLOWED_DATASETS", "analysis_results,temp_tables,user_analysis,dashboard_data,reporting,segments")}'
+export BIGQUERY_ENABLE_LOGGING='{base_env.get("BIGQUERY_ENABLE_LOGGING", "true")}'
+export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
 """
         
         # Add app filter and date range if provided
