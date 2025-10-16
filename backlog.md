@@ -5,7 +5,8 @@ This document tracks future improvements and enhancements for the analysis workf
 ## Critical items 
 - [ ] **Create spec for project
 - [ ] **Add description generated via LLM to enrich data further
-- [ ] **
+- [ ] **Collapse output tables to limited number of tables
+- [ ] **Collapse extraneous scripts to a single reference script
 
 ## High Priority Items
 
