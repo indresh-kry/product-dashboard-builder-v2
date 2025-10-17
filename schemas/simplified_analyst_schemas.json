@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "last_updated": "2025-10-16",
+  "description": "Simplified JSON schemas for LLM analysts with easier structure",
+  
+  "analysts": {
+    "revenue_optimization": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "revenue_analysis",
+          "recommendations",
+          "confidence_score"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["revenue_optimization"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "revenue_analysis": {
+            "type": "object",
+            "required": ["total_revenue", "arpu", "payer_percentage", "revenue_health_score"],
+            "properties": {
+              "total_revenue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "arpu": {
+                "type": "number",
+                "minimum": 0
+              },
+              "payer_percentage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "revenue_health_score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["recommendation", "impact", "effort"],
+              "properties": {
+                "recommendation": {"type": "string"},
+                "impact": {"type": "string", "enum": ["High", "Medium", "Low", "N/A"]},
+                "effort": {"type": "string", "enum": ["High", "Medium", "Low", "N/A"]}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    }
+  }
+}

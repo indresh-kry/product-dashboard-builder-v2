@@ -1,0 +1,421 @@
+{
+  "schema_version": "1.0.0",
+  "last_updated": "2025-10-16",
+  "description": "Comprehensive metric definitions with formulas, units, and confidence intervals for all analytics metrics",
+  
+  "metric_categories": {
+    "engagement_metrics": {
+      "description": "User engagement and activity metrics",
+      "metrics": {
+        "engagement_score": {
+          "formula": "(session_frequency * 0.3) + (session_duration * 0.3) + (event_frequency * 0.2) + (recency_score * 0.2)",
+          "scale": "0-100",
+          "unit": "score",
+          "calculation_method": "weighted_average",
+          "definition": "Composite score measuring user engagement across multiple dimensions",
+          "confidence_interval": "±5 points (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "industry_average": 65,
+            "excellent": 80,
+            "poor": 40
+          },
+          "data_requirements": [
+            "session_frequency",
+            "session_duration_minutes", 
+            "event_frequency",
+            "last_activity_date"
+          ]
+        },
+        "avg_session_time": {
+          "formula": "SUM(session_duration_minutes) / COUNT(sessions)",
+          "unit": "minutes",
+          "calculation_method": "mean",
+          "definition": "Average duration of user sessions",
+          "confidence_interval": "±2.5 minutes (95% CI)",
+          "sample_size_requirement": 500,
+          "benchmark": {
+            "industry_average": 8.5,
+            "excellent": 15.0,
+            "poor": 3.0
+          },
+          "alternative_calculations": {
+            "median": "MEDIAN(session_duration_minutes)",
+            "p95": "PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY session_duration_minutes)"
+          }
+        },
+        "session_frequency": {
+          "formula": "COUNT(sessions) / COUNT(DISTINCT DATE(session_date))",
+          "unit": "sessions_per_day",
+          "calculation_method": "average",
+          "definition": "Average number of sessions per day per user",
+          "confidence_interval": "±0.3 sessions (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "industry_average": 2.1,
+            "excellent": 4.0,
+            "poor": 1.0
+          }
+        },
+        "event_frequency": {
+          "formula": "COUNT(events) / COUNT(DISTINCT DATE(event_date))",
+          "unit": "events_per_day",
+          "calculation_method": "average",
+          "definition": "Average number of events per day per user",
+          "confidence_interval": "±2.0 events (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "industry_average": 15.0,
+            "excellent": 30.0,
+            "poor": 5.0
+          }
+        }
+      }
+    },
+    
+    "user_metrics": {
+      "description": "User acquisition, retention, and segmentation metrics",
+      "metrics": {
+        "dau": {
+          "formula": "COUNT(DISTINCT user_id) WHERE DATE(event_date) = target_date",
+          "unit": "users",
+          "calculation_method": "count_distinct",
+          "definition": "Daily Active Users - unique users who performed at least one action on a given day",
+          "confidence_interval": "±2% (95% CI)",
+          "sample_size_requirement": 10000,
+          "benchmark": {
+            "industry_average": "varies_by_app_size",
+            "growth_target": "5-10% monthly"
+          }
+        },
+        "new_user_ratio": {
+          "formula": "new_users / total_dau",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of DAU that are new users (first event in analysis period)",
+          "confidence_interval": "±1% (95% CI)",
+          "sample_size_requirement": 5000,
+          "rolling_window": "daily",
+          "benchmark": {
+            "industry_average": 0.15,
+            "excellent": 0.25,
+            "poor": 0.05
+          }
+        },
+        "user_retention_rate": {
+          "formula": "retained_users / cohort_size",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of users who return on day X after their first event",
+          "confidence_interval": "±0.5% (95% CI)",
+          "sample_size_requirement": 1000,
+          "cohort_definition": "Users grouped by date of first event",
+          "benchmark": {
+            "day_1": {"industry_average": 0.25, "excellent": 0.40, "poor": 0.15},
+            "day_7": {"industry_average": 0.15, "excellent": 0.25, "poor": 0.08},
+            "day_30": {"industry_average": 0.08, "excellent": 0.15, "poor": 0.03}
+          }
+        },
+        "segment_health_score": {
+          "formula": "(retention_rate * 0.4) + (engagement_score * 0.3) + (revenue_contribution * 0.3)",
+          "scale": "0-1",
+          "unit": "score",
+          "calculation_method": "weighted_average",
+          "definition": "Composite health score for user segments",
+          "confidence_interval": "±0.05 (95% CI)",
+          "sample_size_requirement": 500,
+          "benchmark": {
+            "industry_average": 0.7,
+            "excellent": 0.85,
+            "poor": 0.5
+          }
+        }
+      }
+    },
+    
+    "revenue_metrics": {
+      "description": "Revenue and monetization metrics",
+      "metrics": {
+        "arpdau": {
+          "formula": "total_revenue / dau",
+          "unit": "USD",
+          "calculation_method": "ratio",
+          "definition": "Average Revenue Per Daily Active User",
+          "confidence_interval": "±$0.05 (95% CI)",
+          "sample_size_requirement": 10000,
+          "benchmark": {
+            "industry_average": 0.15,
+            "excellent": 0.50,
+            "poor": 0.05
+          }
+        },
+        "payer_percentage": {
+          "formula": "paying_users / total_users",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of users who have made at least one purchase",
+          "confidence_interval": "±0.5% (95% CI)",
+          "sample_size_requirement": 10000,
+          "benchmark": {
+            "industry_average": 0.05,
+            "excellent": 0.15,
+            "poor": 0.02
+          }
+        },
+        "aov": {
+          "formula": "total_revenue / number_of_purchases",
+          "unit": "USD",
+          "calculation_method": "mean",
+          "definition": "Average Order Value - average revenue per purchase",
+          "confidence_interval": "±$0.25 (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "industry_average": 2.50,
+            "excellent": 5.00,
+            "poor": 1.00
+          }
+        },
+        "ltv": {
+          "formula": "SUM(revenue_per_user) / COUNT(DISTINCT user_id)",
+          "unit": "USD",
+          "calculation_method": "mean",
+          "definition": "Lifetime Value - average total revenue per user",
+          "confidence_interval": "±$0.50 (95% CI)",
+          "sample_size_requirement": 5000,
+          "benchmark": {
+            "industry_average": 5.00,
+            "excellent": 15.00,
+            "poor": 1.50
+          }
+        },
+        "monetization_rate": {
+          "formula": "paying_users / total_users",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of users who contribute to revenue",
+          "confidence_interval": "±0.3% (95% CI)",
+          "sample_size_requirement": 10000,
+          "benchmark": {
+            "industry_average": 0.08,
+            "excellent": 0.20,
+            "poor": 0.03
+          }
+        }
+      }
+    },
+    
+    "geographic_metrics": {
+      "description": "Geographic and market analysis metrics",
+      "metrics": {
+        "market_concentration": {
+          "formula": "SUM(top_3_markets_revenue) / total_revenue",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of revenue concentrated in top 3 markets",
+          "confidence_interval": "±2% (95% CI)",
+          "sample_size_requirement": 5000,
+          "benchmark": {
+            "industry_average": 0.75,
+            "excellent": 0.60,
+            "poor": 0.90
+          }
+        },
+        "market_diversity_score": {
+          "formula": "1 - (SUM(market_revenue^2) / total_revenue^2)",
+          "scale": "0-1",
+          "unit": "score",
+          "calculation_method": "herfindahl_index_inverse",
+          "definition": "Diversity score based on revenue distribution across markets",
+          "confidence_interval": "±0.05 (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "industry_average": 0.4,
+            "excellent": 0.7,
+            "poor": 0.2
+          }
+        },
+        "localization_coverage": {
+          "formula": "localized_strings / total_strings",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of app strings translated to local languages",
+          "confidence_interval": "±1% (95% CI)",
+          "sample_size_requirement": 100,
+          "benchmark": {
+            "industry_average": 0.8,
+            "excellent": 0.95,
+            "poor": 0.5
+          }
+        }
+      }
+    },
+    
+    "funnel_metrics": {
+      "description": "User journey and conversion funnel metrics",
+      "metrics": {
+        "funnel_conversion_rate": {
+          "formula": "users_at_step_n / users_at_step_1",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of users who complete a specific funnel step",
+          "confidence_interval": "±1% (95% CI)",
+          "sample_size_requirement": 1000,
+          "funnel_steps": {
+            "install": {"event": "app_install", "threshold": "first_event"},
+            "ftue_complete": {"event": "ftue_complete", "threshold": "event_occurred"},
+            "level_3": {"event": "div_level_3", "threshold": "event_occurred"},
+            "first_purchase": {"event": "iap_purchase", "threshold": "revenue > 0"}
+          }
+        },
+        "time_to_conversion": {
+          "formula": "MEDIAN(time_between_steps)",
+          "unit": "minutes",
+          "calculation_method": "median",
+          "definition": "Median time for users to progress between funnel steps",
+          "confidence_interval": "±5 minutes (95% CI)",
+          "sample_size_requirement": 500,
+          "benchmark": {
+            "ftue_complete": {"industry_average": 5.0, "excellent": 3.0, "poor": 10.0},
+            "first_purchase": {"industry_average": 1440, "excellent": 720, "poor": 2880}
+          }
+        }
+      }
+    },
+    
+    "data_quality_metrics": {
+      "description": "Data quality and completeness metrics",
+      "metrics": {
+        "data_completeness": {
+          "formula": "non_null_values / total_values",
+          "unit": "percentage",
+          "calculation_method": "ratio",
+          "definition": "Percentage of non-null values in a dataset",
+          "confidence_interval": "±0.5% (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "excellent": 0.95,
+            "good": 0.85,
+            "poor": 0.70
+          }
+        },
+        "data_quality_score": {
+          "formula": "(completeness * 0.4) + (consistency * 0.3) + (accuracy * 0.3)",
+          "scale": "0-1",
+          "unit": "score",
+          "calculation_method": "weighted_average",
+          "definition": "Composite score for overall data quality",
+          "confidence_interval": "±0.03 (95% CI)",
+          "sample_size_requirement": 1000,
+          "benchmark": {
+            "excellent": 0.9,
+            "good": 0.8,
+            "poor": 0.6
+          }
+        }
+      }
+    }
+  },
+  
+  "segment_definitions": {
+    "revenue_segments": {
+      "free": {
+        "threshold": "revenue = 0",
+        "definition": "Users who have not made any purchases",
+        "expected_percentage": 0.85
+      },
+      "minnow": {
+        "threshold": "0 < revenue <= 2.00",
+        "definition": "Low-value users with minimal revenue contribution",
+        "expected_percentage": 0.10
+      },
+      "dolphin": {
+        "threshold": "2.00 < revenue <= 10.00",
+        "definition": "Medium-value users with moderate revenue contribution",
+        "expected_percentage": 0.04
+      },
+      "whale": {
+        "threshold": "revenue > 10.00",
+        "definition": "High-value users with significant revenue contribution",
+        "expected_percentage": 0.01
+      }
+    },
+    "engagement_segments": {
+      "low_engagement": {
+        "threshold": "engagement_score < 40",
+        "definition": "Users with low engagement across all dimensions"
+      },
+      "medium_engagement": {
+        "threshold": "40 <= engagement_score < 70",
+        "definition": "Users with moderate engagement levels"
+      },
+      "high_engagement": {
+        "threshold": "engagement_score >= 70",
+        "definition": "Users with high engagement across all dimensions"
+      }
+    }
+  },
+  
+  "confidence_calculation": {
+    "method": "wilson_score_interval",
+    "formula": "p̂ ± z * √(p̂(1-p̂)/n)",
+    "z_scores": {
+      "90%": 1.645,
+      "95%": 1.96,
+      "99%": 2.576
+    },
+    "minimum_sample_sizes": {
+      "proportions": 100,
+      "means": 30,
+      "correlations": 50,
+      "regression": 100
+    }
+  },
+  
+  "calculation_methods": {
+    "mean": {
+      "formula": "SUM(values) / COUNT(values)",
+      "use_case": "Average values with normal distribution",
+      "robustness": "Sensitive to outliers"
+    },
+    "median": {
+      "formula": "PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY values)",
+      "use_case": "Central tendency with skewed distributions",
+      "robustness": "Robust to outliers"
+    },
+    "weighted_average": {
+      "formula": "SUM(value * weight) / SUM(weight)",
+      "use_case": "Averages with different importance weights",
+      "robustness": "Depends on weight distribution"
+    },
+    "geometric_mean": {
+      "formula": "EXP(AVG(LN(values)))",
+      "use_case": "Growth rates and multiplicative processes",
+      "robustness": "Robust to extreme values"
+    }
+  },
+  
+  "validation_rules": {
+    "required_fields": [
+      "formula",
+      "unit", 
+      "calculation_method",
+      "definition",
+      "confidence_interval",
+      "sample_size_requirement"
+    ],
+    "unit_standards": {
+      "counts": ["users", "sessions", "events", "purchases"],
+      "percentages": ["percentage", "ratio"],
+      "currency": ["USD", "EUR", "INR", "GBP"],
+      "time": ["seconds", "minutes", "hours", "days"],
+      "scores": ["score", "index", "rating"]
+    },
+    "confidence_levels": [0.90, 0.95, 0.99],
+    "minimum_sample_sizes": {
+      "descriptive": 30,
+      "inferential": 100,
+      "regression": 100,
+      "time_series": 50
+    }
+  }
+}

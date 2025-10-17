@@ -1,0 +1,779 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Standardized JSON schemas for all LLM analysts",
+  "analysts": {
+    "daily_metrics": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "trend_analysis",
+          "key_metrics",
+          "insights",
+          "confidence_score",
+          "metadata"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["daily_metrics"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "trend_analysis": {
+            "type": "object",
+            "required": ["dau_trend", "growth_rate", "consistency_score"],
+            "properties": {
+              "dau_trend": {
+                "type": "string",
+                "enum": ["increasing", "decreasing", "stable", "volatile"]
+              },
+              "growth_rate": {
+                "type": "object",
+                "required": ["value", "unit", "confidence", "sample_size"],
+                "properties": {
+                  "value": {"type": "number"},
+                  "unit": {"type": "string", "enum": ["percentage", "absolute"]},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                  "sample_size": {"type": "integer", "minimum": 1}
+                }
+              },
+              "consistency_score": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              }
+            }
+          },
+          "key_metrics": {
+            "type": "object",
+            "required": ["avg_dau", "new_user_ratio", "engagement_stability"],
+            "properties": {
+              "avg_dau": {
+                "type": "object",
+                "required": ["value", "unit", "confidence", "sample_size"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0},
+                  "unit": {"type": "string", "enum": ["users"]},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                  "sample_size": {"type": "integer", "minimum": 1}
+                }
+              },
+              "new_user_ratio": {
+                "type": "object",
+                "required": ["value", "unit", "definition", "confidence"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["percentage"]},
+                  "definition": {"type": "string"},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              },
+              "engagement_stability": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              }
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["insight", "significance", "confidence", "sample_size"],
+              "properties": {
+                "insight": {"type": "string"},
+                "significance": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "sample_size": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["generated_at", "run_hash", "analyst_type", "data_files_used"],
+            "properties": {
+              "generated_at": {"type": "string", "format": "date-time"},
+              "run_hash": {"type": "string"},
+              "analyst_type": {"type": "string"},
+              "data_files_used": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "user_segmentation": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "segment_analysis",
+          "journey_insights",
+          "insights",
+          "confidence_score",
+          "metadata"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["user_segmentation"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "segment_analysis": {
+            "type": "object",
+            "required": ["top_performing_segment", "segment_health_score", "segment_distribution"],
+            "properties": {
+              "top_performing_segment": {
+                "type": "string",
+                "enum": ["free", "minnow", "dolphin", "whale"]
+              },
+              "segment_health_score": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              },
+              "segment_distribution": {
+                "type": "object",
+                "properties": {
+                  "free": {"type": "object", "required": ["percentage", "sample_size"]},
+                  "minnow": {"type": "object", "required": ["percentage", "sample_size"]},
+                  "dolphin": {"type": "object", "required": ["percentage", "sample_size"]},
+                  "whale": {"type": "object", "required": ["percentage", "sample_size"]}
+                }
+              }
+            }
+          },
+          "journey_insights": {
+            "type": "object",
+            "required": ["journey_completion_rate", "key_milestones"],
+            "properties": {
+              "journey_completion_rate": {
+                "type": "object",
+                "required": ["value", "unit", "confidence"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["percentage"]},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              },
+              "key_milestones": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["milestone", "completion_rate", "median_time"],
+                  "properties": {
+                    "milestone": {"type": "string"},
+                    "completion_rate": {"type": "number", "minimum": 0, "maximum": 1},
+                    "median_time": {"type": "object", "required": ["value", "unit"]}
+                  }
+                }
+              }
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["insight", "significance", "confidence", "sample_size"],
+              "properties": {
+                "insight": {"type": "string"},
+                "significance": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "sample_size": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["generated_at", "run_hash", "analyst_type", "data_files_used"],
+            "properties": {
+              "generated_at": {"type": "string", "format": "date-time"},
+              "run_hash": {"type": "string"},
+              "analyst_type": {"type": "string"},
+              "data_files_used": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "revenue_optimization": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "revenue_analysis",
+          "monetization_insights",
+          "pricing_recommendations",
+          "growth_strategies",
+          "confidence_score",
+          "metadata"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["revenue_optimization"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "revenue_analysis": {
+            "type": "object",
+            "required": ["revenue_streams", "monetization_rate", "arpu", "revenue_health_score"],
+            "properties": {
+              "revenue_streams": {
+                "type": "object",
+                "required": ["iap", "ads", "subscription"],
+                "properties": {
+                  "iap": {
+                    "type": "object",
+                    "required": ["value", "unit", "confidence", "sample_size"],
+                    "properties": {
+                      "value": {"type": "number", "minimum": 0, "maximum": 1},
+                      "unit": {"type": "string", "enum": ["percentage"]},
+                      "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                      "sample_size": {"type": "integer", "minimum": 1}
+                    }
+                  },
+                  "ads": {
+                    "type": "object",
+                    "required": ["value", "unit", "confidence", "sample_size"],
+                    "properties": {
+                      "value": {"type": "number", "minimum": 0, "maximum": 1},
+                      "unit": {"type": "string", "enum": ["percentage"]},
+                      "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                      "sample_size": {"type": "integer", "minimum": 1}
+                    }
+                  },
+                  "subscription": {
+                    "type": "object",
+                    "required": ["value", "unit", "confidence", "sample_size"],
+                    "properties": {
+                      "value": {"type": "number", "minimum": 0, "maximum": 1},
+                      "unit": {"type": "string", "enum": ["percentage"]},
+                      "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                      "sample_size": {"type": "integer", "minimum": 1}
+                    }
+                  }
+                }
+              },
+              "monetization_rate": {
+                "type": "object",
+                "required": ["value", "unit", "definition", "confidence"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["percentage"]},
+                  "definition": {"type": "string"},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              },
+              "arpu": {
+                "type": "object",
+                "required": ["value", "unit", "definition", "confidence"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0},
+                  "unit": {"type": "string", "enum": ["USD", "EUR", "INR"]},
+                  "definition": {"type": "string"},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              },
+              "revenue_health_score": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              }
+            }
+          },
+          "monetization_insights": {
+            "type": "object",
+            "required": ["paying_user_characteristics", "conversion_factors", "monetization_funnel"],
+            "properties": {
+              "paying_user_characteristics": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "conversion_factors": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "monetization_funnel": {
+                "type": "object",
+                "required": ["awareness", "consideration", "purchase"],
+                "properties": {
+                  "awareness": {"type": "number", "minimum": 0, "maximum": 1},
+                  "consideration": {"type": "number", "minimum": 0, "maximum": 1},
+                  "purchase": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              }
+            }
+          },
+          "pricing_recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["recommendation", "target_segment", "expected_impact", "implementation_effort"],
+              "properties": {
+                "recommendation": {"type": "string"},
+                "target_segment": {"type": "string", "enum": ["free", "minnow", "dolphin", "whale"]},
+                "expected_impact": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "implementation_effort": {"type": "string", "enum": ["High", "Medium", "Low"]}
+              }
+            }
+          },
+          "growth_strategies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["strategy", "revenue_stream", "expected_impact", "timeline"],
+              "properties": {
+                "strategy": {"type": "string"},
+                "revenue_stream": {"type": "string", "enum": ["iap", "ads", "subscription"]},
+                "expected_impact": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "timeline": {"type": "string"}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["generated_at", "run_hash", "analyst_type", "data_files_used"],
+            "properties": {
+              "generated_at": {"type": "string", "format": "date-time"},
+              "run_hash": {"type": "string"},
+              "analyst_type": {"type": "string"},
+              "data_files_used": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "geographic": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "market_analysis",
+          "localization_insights",
+          "insights",
+          "confidence_score",
+          "metadata"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["geographic"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "market_analysis": {
+            "type": "object",
+            "required": ["primary_markets", "market_concentration", "market_diversity_score"],
+            "properties": {
+              "primary_markets": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "market_concentration": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["percentage"]},
+                  "definition": {"type": "string"}
+                }
+              },
+              "market_diversity_score": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              }
+            }
+          },
+          "localization_insights": {
+            "type": "object",
+            "required": ["language_coverage", "cultural_adaptation"],
+            "properties": {
+              "language_coverage": {
+                "type": "object",
+                "required": ["value", "unit", "languages"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["percentage"]},
+                  "languages": {"type": "array", "items": {"type": "string"}}
+                }
+              },
+              "cultural_adaptation": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["insight", "significance", "confidence", "sample_size"],
+              "properties": {
+                "insight": {"type": "string"},
+                "significance": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "sample_size": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["generated_at", "run_hash", "analyst_type", "data_files_used"],
+            "properties": {
+              "generated_at": {"type": "string", "format": "date-time"},
+              "run_hash": {"type": "string"},
+              "analyst_type": {"type": "string"},
+              "data_files_used": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "cohort_retention": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "retention_analysis",
+          "cohort_insights",
+          "churn_analysis",
+          "insights",
+          "confidence_score",
+          "metadata"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["cohort_retention"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "retention_analysis": {
+            "type": "object",
+            "required": ["retention_curve", "key_retention_milestones", "retention_health_score", "retention_trend"],
+            "properties": {
+              "retention_curve": {
+                "type": "object",
+                "required": ["day_1", "day_7", "day_30"],
+                "properties": {
+                  "day_1": {
+                    "type": "object",
+                    "required": ["retention", "ci_lower", "ci_upper", "sample_size"],
+                    "properties": {
+                      "retention": {"type": "number", "minimum": 0, "maximum": 1},
+                      "ci_lower": {"type": "number", "minimum": 0, "maximum": 1},
+                      "ci_upper": {"type": "number", "minimum": 0, "maximum": 1},
+                      "sample_size": {"type": "integer", "minimum": 1}
+                    }
+                  },
+                  "day_7": {
+                    "type": "object",
+                    "required": ["retention", "ci_lower", "ci_upper", "sample_size"],
+                    "properties": {
+                      "retention": {"type": "number", "minimum": 0, "maximum": 1},
+                      "ci_lower": {"type": "number", "minimum": 0, "maximum": 1},
+                      "ci_upper": {"type": "number", "minimum": 0, "maximum": 1},
+                      "sample_size": {"type": "integer", "minimum": 1}
+                    }
+                  },
+                  "day_30": {
+                    "type": "object",
+                    "required": ["retention", "ci_lower", "ci_upper", "sample_size"],
+                    "properties": {
+                      "retention": {"type": "number", "minimum": 0, "maximum": 1},
+                      "ci_lower": {"type": "number", "minimum": 0, "maximum": 1},
+                      "ci_upper": {"type": "number", "minimum": 0, "maximum": 1},
+                      "sample_size": {"type": "integer", "minimum": 1}
+                    }
+                  }
+                }
+              },
+              "key_retention_milestones": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "retention_health_score": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              },
+              "retention_trend": {
+                "type": "string",
+                "enum": ["improving", "declining", "stable", "volatile"]
+              }
+            }
+          },
+          "cohort_insights": {
+            "type": "object",
+            "required": ["best_performing_cohorts", "cohort_trends", "cohort_size_impact"],
+            "properties": {
+              "best_performing_cohorts": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "cohort_trends": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "cohort_size_impact": {
+                "type": "string",
+                "enum": ["positive", "negative", "neutral"]
+              }
+            }
+          },
+          "churn_analysis": {
+            "type": "object",
+            "required": ["churn_patterns", "churn_risk_factors", "critical_churn_periods"],
+            "properties": {
+              "churn_patterns": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "churn_risk_factors": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "critical_churn_periods": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["insight", "significance", "confidence", "sample_size"],
+              "properties": {
+                "insight": {"type": "string"},
+                "significance": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "sample_size": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["generated_at", "run_hash", "analyst_type", "data_files_used"],
+            "properties": {
+              "generated_at": {"type": "string", "format": "date-time"},
+              "run_hash": {"type": "string"},
+              "analyst_type": {"type": "string"},
+              "data_files_used": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "data_quality": {
+      "schema": {
+        "type": "object",
+        "required": [
+          "analyst_type",
+          "timestamp",
+          "run_hash",
+          "quality_assessment",
+          "data_completeness",
+          "sample_adequacy",
+          "insights",
+          "confidence_score",
+          "metadata"
+        ],
+        "properties": {
+          "analyst_type": {
+            "type": "string",
+            "enum": ["data_quality"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "run_hash": {
+            "type": "string"
+          },
+          "quality_assessment": {
+            "type": "object",
+            "required": ["overall_quality_score", "quality_issues", "quality_trend"],
+            "properties": {
+              "overall_quality_score": {
+                "type": "object",
+                "required": ["value", "unit", "definition"],
+                "properties": {
+                  "value": {"type": "number", "minimum": 0, "maximum": 1},
+                  "unit": {"type": "string", "enum": ["score"]},
+                  "definition": {"type": "string"}
+                }
+              },
+              "quality_issues": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "quality_trend": {
+                "type": "string",
+                "enum": ["improving", "declining", "stable", "volatile"]
+              }
+            }
+          },
+          "data_completeness": {
+            "type": "object",
+            "required": ["value", "unit", "critical_fields", "missing_fields"],
+            "properties": {
+              "value": {"type": "number", "minimum": 0, "maximum": 1},
+              "unit": {"type": "string", "enum": ["percentage"]},
+              "critical_fields": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "missing_fields": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          },
+          "sample_adequacy": {
+            "type": "object",
+            "required": ["sufficient", "min_sample_size", "current_sample_size"],
+            "properties": {
+              "sufficient": {"type": "boolean"},
+              "min_sample_size": {"type": "integer", "minimum": 1},
+              "current_sample_size": {"type": "integer", "minimum": 1}
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["insight", "significance", "confidence", "sample_size"],
+              "properties": {
+                "insight": {"type": "string"},
+                "significance": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "sample_size": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["generated_at", "run_hash", "analyst_type", "data_files_used"],
+            "properties": {
+              "generated_at": {"type": "string", "format": "date-time"},
+              "run_hash": {"type": "string"},
+              "analyst_type": {"type": "string"},
+              "data_files_used": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
