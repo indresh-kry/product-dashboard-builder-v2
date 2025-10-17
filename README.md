@@ -40,26 +40,45 @@ python scripts/analysis_workflow_orchestrator.py --app-filter com.nukebox.mandir
 
 **New to the codebase?** Start here to understand how the system works:
 
-### 🔍 [Script Documentation](./scripts/script_summary/)
+### 🔍 [Script Documentation](./scripts/)
 
-The `scripts/script_summary/` directory contains comprehensive documentation for all active scripts, including:
+The `scripts/` directory contains comprehensive documentation for all active scripts, including:
 
 - **Function overviews** with parameters and descriptions
 - **External tools and APIs** used by each script
 - **Variables & Configuration** organized by source (input, env, hardcoded, computed)
 - **Mermaid flow diagrams** showing function call sequences
-- **Usage examples** and command-line options
-- **Dependencies** and environment variables
-- **Integration points** with other scripts
 
+### 🧠 Multi-LLM Architecture
+
+The system uses a sophisticated multi-LLM architecture for generating insights:
+
+- **6 Specialized Child LLMs**: Each focused on a specific domain (daily metrics, user segmentation, geographic analysis, cohort retention, revenue optimization, data quality)
+- **1 Parent Coordinator LLM**: Synthesizes insights from all child LLMs into executive recommendations
+- **Parallel Processing**: Child LLMs run simultaneously for faster execution
+- **Token Optimization**: Concise prompts to stay within API limits
 #### Available Script Documentation:
 
-- **[Analysis Workflow Orchestrator](./scripts/script_summary/analysis_workflow_orchestrator.md)** - Central orchestrator managing the entire workflow (17 functions)
-- **[System Health Check](./scripts/script_summary/system_health_check.md)** - Environment validation and BigQuery connection testing (5 functions)
-- **[Schema Discovery v3](./scripts/script_summary/schema_discovery_v3.md)** - Enhanced schema discovery with session/revenue analysis (14 functions)
-- **[Data Aggregation v3](./scripts/script_summary/data_aggregation_v3.md)** - Final working data aggregation with comprehensive metrics (9 functions)
-- **[User Segmentation v1](./scripts/script_summary/user_segmentation_v1.md)** - User segmentation with behavioral and revenue analysis (12 functions)
-- **[Rules Engine Integration](./scripts/script_summary/rules_engine_integration.md)** - Business logic validation and rule processing (9 functions)
+**Core Workflow Scripts:**
+- [Analysis Workflow Orchestrator](./scripts/analysis_workflow_orchestrator.md) - Central orchestrator for the entire workflow
+- [System Health Check](./scripts/system_health_check.md) - Environment validation and health checks
+- [Schema Discovery v3](./scripts/schema_discovery_v3.md) - Enhanced schema discovery with session and revenue analysis
+- [Data Aggregation v3](./scripts/data_aggregation_v3.md) - User-level data aggregation with safety guards
+- [User Segmentation v1](./scripts/user_segmentation_v1.md) - User segmentation and behavioral analysis
+
+**Multi-LLM Architecture Scripts:**
+- [Multi-LLM Insights Orchestrator](./scripts/llm_insights_multi_v1.md) - Main orchestrator for multi-LLM system
+- [LLM Coordinator](./scripts/llm_coordinator_v1.md) - Parent LLM for synthesizing child insights
+- [Daily Metrics Analyst](./scripts/llm_child_daily_metrics_v1.md) - Specialized daily metrics analysis
+- [User Segmentation Analyst](./scripts/llm_child_user_segmentation_v1.md) - Specialized user segmentation analysis
+- [Geographic Analyst](./scripts/llm_child_geographic_v1.md) - Specialized geographic performance analysis
+- [Cohort & Retention Analyst](./scripts/llm_child_cohort_retention_v1.md) - Specialized cohort and retention analysis
+- [Revenue Optimization Analyst](./scripts/llm_child_revenue_optimization_v1.md) - Specialized revenue optimization analysis
+- [Data Quality Analyst](./scripts/llm_child_data_quality_v1.md) - Specialized data quality analysis
+
+**Supporting Scripts:**
+- [Rules Engine Integration](./scripts/rules_engine_integration.md) - Advanced rule processing capabilities
+- [BigQuery Safety](./scripts/bigquery_safety.md) - Safety guardrails for BigQuery operations
 
 ### 📋 [Workflow Guidelines](./workflow_guidelines/)
 

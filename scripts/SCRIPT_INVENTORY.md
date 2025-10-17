@@ -24,6 +24,18 @@
 |--------|---------|--------|-----------|-------------|
 | `user_segmentation_v1.py` | v1.0.0 | ✅ Active | New | Install cohorts, behavioral segments, revenue segments |
 
+### Phase 5 - Multi-LLM Insights Generation
+| Script | Version | Status | Last Used | Description |
+|--------|---------|--------|-----------|-------------|
+| `llm_insights_multi_v1.py` | v1.0.0 | ✅ Active | New | Main multi-LLM insights orchestrator |
+| `llm_coordinator_v1.py` | v1.0.0 | ✅ Active | New | Parent LLM coordinator |
+| `llm_child_daily_metrics_v1.py` | v1.0.0 | ✅ Active | New | Daily metrics analysis LLM |
+| `llm_child_user_segmentation_v1.py` | v1.0.0 | ✅ Active | New | User segmentation analysis LLM |
+| `llm_child_geographic_v1.py` | v1.0.0 | ✅ Active | New | Geographic analysis LLM |
+| `llm_child_cohort_retention_v1.py` | v1.0.0 | ✅ Active | New | Cohort & retention analysis LLM |
+| `llm_child_revenue_optimization_v1.py` | v1.0.0 | ✅ Active | New | Revenue optimization analysis LLM |
+| `llm_child_data_quality_v1.py` | v1.0.0 | ✅ Active | New | Data quality analysis LLM |
+
 ### Supporting Scripts
 | Script | Version | Status | Last Used | Description |
 |--------|---------|--------|-----------|-------------|

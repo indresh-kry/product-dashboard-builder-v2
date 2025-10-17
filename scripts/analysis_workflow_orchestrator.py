@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
 Analysis Workflow Orchestrator for Product Dashboard Builder v2
-Version: 1.1.0
+Version: 1.2.0
 Last Updated: 2025-10-15
 
 This script serves as the central orchestrator for the entire analysis workflow,
 automatically executing all phases from system initialization through final reporting.
 
 Changelog:
+- v1.2.0 (2025-10-15): Added Phase 4 skip functionality and Phase 5 LLM insights integration
 - v1.1.0 (2025-10-15): Added --raw-data-limit and --aggregation-limit command-line arguments
 - v1.0.0 (2025-10-14): Initial version with complete workflow orchestration
 
@@ -121,6 +122,23 @@ class AnalysisWorkflowOrchestrator:
             'BIGQUERY_ENABLE_AUDIT': 'true'
         })
         
+        # Set Phase 4 skip flag
+        if hasattr(args, 'skip_phase_4') and args.skip_phase_4:
+            base_env['SKIP_PHASE_4'] = 'true'
+        else:
+            base_env['SKIP_PHASE_4'] = 'false'
+        
+        # Set LLM configuration
+        if hasattr(args, 'force_phase_3_data') and args.force_phase_3_data:
+            base_env['FORCE_PHASE_3_DATA'] = 'true'
+        else:
+            base_env['FORCE_PHASE_3_DATA'] = 'false'
+        
+        if hasattr(args, 'insights_depth') and args.insights_depth:
+            base_env['INSIGHTS_DEPTH'] = args.insights_depth
+        else:
+            base_env['INSIGHTS_DEPTH'] = 'comprehensive'
+        
         # Set default column mappings (can be overridden in .env)
         env_content = f"""export RUN_HASH={run_hash}
 export DATASET_NAME='{base_env.get("DATASET_NAME", "gc-prod-459709.nbs_dataset.singular_user_level_event_data")}'
@@ -137,9 +155,11 @@ export ANALYSIS_WINDOW_DAYS='{base_env.get("ANALYSIS_WINDOW_DAYS", "90")}'
 export MODE='{args.mode if args.mode else "full"}'
 export GOOGLE_CLOUD_PROJECT='{base_env.get("GOOGLE_CLOUD_PROJECT", "gc-prod-459709")}'
 export GOOGLE_APPLICATION_CREDENTIALS='{base_env.get("GOOGLE_APPLICATION_CREDENTIALS", "/Users/indresh/GR-Repo-Local/product-dashboard-builder-v2/creds.json")}'
-export OPENAI_API_KEY='{base_env.get("OPENAI_API_KEY", "placeholder_openai_key")}'
-export HUGGINGFACE_API_KEY='{base_env.get("HUGGINGFACE_API_KEY", "placeholder_hf_key")}'
-export LLM_PROVIDER='{base_env.get("LLM_PROVIDER", "huggingface")}'
+        export OPENAI_API_KEY='{base_env.get("OPENAI_API_KEY", "placeholder_openai_key")}'
+        export HUGGINGFACE_API_KEY='{base_env.get("HUGGINGFACE_API_KEY", "placeholder_hf_key")}'
+        export LLM_PROVIDER='{base_env.get("LLM_PROVIDER", "openai")}'
+        export INSIGHTS_DEPTH='{base_env.get("INSIGHTS_DEPTH", "comprehensive")}'
+        export FORCE_PHASE_3_DATA='{base_env.get("FORCE_PHASE_3_DATA", "false")}'
 export DATABASE_URL='{base_env.get("DATABASE_URL", "postgresql://user:password@localhost:5432/dbname")}'
 export RAW_DATA_LIMIT='{args.raw_data_limit if hasattr(args, "raw_data_limit") and args.raw_data_limit else base_env.get("RAW_DATA_LIMIT", "10000")}'
 export AGGREGATION_LIMIT='{args.aggregation_limit if hasattr(args, "aggregation_limit") and args.aggregation_limit else base_env.get("AGGREGATION_LIMIT", "1000")}'
@@ -187,6 +207,25 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
             print(f"✅ {phase_name} completed successfully")
         else:
             print(f"❌ {phase_name} failed: {details}")
+    
+    def _create_skipped_phase_report(self, run_hash: str, phase_number: int, reason: str):
+        """Create a report for a skipped phase."""
+        validation_dir = Path(f"run_logs/{run_hash}/outputs/validation")
+        validation_dir.mkdir(parents=True, exist_ok=True)
+        
+        skipped_report = {
+            "version": "1.0",
+            "run_hash": run_hash,
+            "phase": f"Phase {phase_number}",
+            "status": "SKIPPED",
+            "generated_at": datetime.now().isoformat(),
+            "skip_reason": reason,
+            "data_source_for_next_phase": "phase_3_outputs" if phase_number == 4 else "previous_phase_outputs",
+            "fallback_available": True
+        }
+        
+        with open(validation_dir / f"phase_{phase_number}_skipped_report.json", 'w') as f:
+            json.dump(skipped_report, f, indent=2)
     
     def _execute_script(self, script_path: str, run_hash: str, phase_name: str) -> Tuple[bool, str]:
         """Execute a Python script with proper environment setup."""
@@ -384,94 +423,89 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
         
         Runs basic data validation and sanity checks.
         Validates aggregation results and data quality.
+        Can be skipped with --skip-phase-4 flag.
         """
         self._log_phase_start("Phase 4: Quality Assurance", run_hash)
         
         try:
-            # TODO: Implement quality assurance script
-            # For now, create placeholder outputs
-            validation_dir = Path(f"run_logs/{run_hash}/outputs/validation")
+            # Check if Phase 4 should be skipped
+            skip_phase_4 = hasattr(args, 'skip_phase_4') and args.skip_phase_4
             
-            # Create placeholder validation results
-            validation_results = {
-                "version": "1.0",
-                "run_hash": run_hash,
-                "generated_at": datetime.now().isoformat(),
-                "data_quality_validation": {
-                    "schema_consistency": "PASS",
-                    "data_completeness": "PASS", 
-                    "revenue_calculation": "PASS",
-                    "user_identification": "PASS"
-                },
-                "sanity_checks": {
-                    "retention_rates": "Within expected ranges",
-                    "revenue_metrics": "Consistent with data patterns",
-                    "user_behavior": "Normal patterns observed"
-                },
-                "cross_validation": {
-                    "calculation_methods": "Consistent results",
-                    "time_periods": "No anomalies detected",
-                    "user_segments": "Results align across segments"
-                }
-            }
+            if skip_phase_4:
+                print("⏭️ Phase 4 (Quality Validation) - SKIPPED")
+                print("   Reason: --skip-phase-4 flag provided")
+                print("   Phase 5 will use Phase 3 outputs directly")
+                
+                # Still validate that Phase 3 outputs exist for Phase 5
+                phase_3_outputs = [
+                    f'run_logs/{run_hash}/outputs/segments/daily/dau_by_date.csv',
+                    f'run_logs/{run_hash}/outputs/segments/user_level/revenue_segments_daily.csv',
+                    f'run_logs/{run_hash}/outputs/segments/user_level/user_journey_cohort.csv'
+                ]
+                
+                missing_outputs = []
+                for output in phase_3_outputs:
+                    if not Path(output).exists():
+                        missing_outputs.append(output)
+                
+                if missing_outputs:
+                    print(f"❌ Missing Phase 3 outputs for Phase 5: {missing_outputs}")
+                    self._log_phase_completion("Phase 4: Quality Assurance", run_hash, False, "Missing Phase 3 outputs for Phase 5")
+                    return False
+                
+                # Create a minimal quality validation report for skipped phase
+                self._create_skipped_phase_report(run_hash, 4, "Quality Validation skipped - Phase 5 will use Phase 3 data")
+                
+                print("✅ Phase 4 skipped successfully")
+                self._log_phase_completion("Phase 4: Quality Assurance", run_hash, True, "Quality validation skipped")
+                return True
             
-            with open(validation_dir / "validation_results.json", 'w') as f:
-                json.dump(validation_results, f, indent=2)
+            # Normal Phase 4 execution - use the dummy script
+            script_path = "scripts/quality_validation_v1.py"
+            success, message = self._execute_script(script_path, run_hash, "Phase 4: Quality Assurance")
             
-            self._log_phase_completion("Phase 4: Quality Assurance", run_hash, True, "Placeholder implementation")
-            return True
-            
+            if success:
+                print("✅ Phase 4 completed successfully")
+                self._log_phase_completion("Phase 4: Quality Assurance", run_hash, True, "Quality validation completed")
+                return True
+            else:
+                print(f"❌ Phase 4 failed: {message}")
+                self._log_phase_completion("Phase 4: Quality Assurance", run_hash, False, message)
+                return False
+                
         except Exception as e:
+            print(f"❌ Error in Phase 4: {str(e)}")
             self._log_phase_completion("Phase 4: Quality Assurance", run_hash, False, str(e))
             return False
     
     def phase_5_llm_insights(self, run_hash: str, args: argparse.Namespace) -> bool:
         """
-        Phase 5: LLM Insights Generation
+        Phase 5: Multi-LLM Insights Generation
         
-        Generates AI-powered insights from metric tables and reports.
+        Generates AI-powered insights using multi-LLM architecture.
+        Coordinates 6 specialized child LLMs and 1 parent coordinator.
         Creates comprehensive analysis reports and actionable recommendations.
+        Uses Phase 3 data as fallback when Phase 4 is skipped.
         """
-        self._log_phase_start("Phase 5: LLM Insights Generation", run_hash)
+        self._log_phase_start("Phase 5: Multi-LLM Insights Generation", run_hash)
         
         try:
-            # TODO: Implement LLM insights script
-            # For now, create placeholder outputs
-            reports_dir = Path(f"run_logs/{run_hash}/outputs/reports")
+            # Execute Multi-LLM insights generation script
+            script_path = "scripts/llm_insights_multi_v1.py"
+            success, message = self._execute_script(script_path, run_hash, "Phase 5: Multi-LLM Insights Generation")
             
-            # Create placeholder insights
-            insights = {
-                "version": "1.0",
-                "run_hash": run_hash,
-                "generated_at": datetime.now().isoformat(),
-                "insights_summary": {
-                    "key_findings": [
-                        "Data quality score: 96.15% - Excellent data quality",
-                        "Primary user identifier: device_id (custom_user_id has limited uniqueness)",
-                        "Session duration calculation: Successfully implemented using timestamps",
-                        "Revenue classification: iap/ad/subscription mapping functional"
-                    ],
-                    "trends_identified": [
-                        "User engagement patterns show normal distribution",
-                        "Revenue events properly classified by type",
-                        "Level progression events dynamically detected"
-                    ],
-                    "recommendations": [
-                        "Consider implementing cohort analysis on larger datasets",
-                        "Add retention metrics for multi-date analysis",
-                        "Implement session count with proper session_id handling"
-                    ]
-                }
-            }
-            
-            with open(reports_dir / "insights_summary.json", 'w') as f:
-                json.dump(insights, f, indent=2)
-            
-            self._log_phase_completion("Phase 5: LLM Insights Generation", run_hash, True, "Placeholder implementation")
-            return True
-            
+            if success:
+                print("✅ Phase 5 (Multi-LLM) completed successfully")
+                self._log_phase_completion("Phase 5: Multi-LLM Insights Generation", run_hash, True, "Multi-LLM insights generated successfully")
+                return True
+            else:
+                print(f"❌ Phase 5 failed: {message}")
+                self._log_phase_completion("Phase 5: Multi-LLM Insights Generation", run_hash, False, message)
+                return False
+                
         except Exception as e:
-            self._log_phase_completion("Phase 5: LLM Insights Generation", run_hash, False, str(e))
+            print(f"❌ Error in Phase 5: {str(e)}")
+            self._log_phase_completion("Phase 5: Multi-LLM Insights Generation", run_hash, False, str(e))
             return False
     
     def phase_6_final_reporting(self, run_hash: str, args: argparse.Namespace) -> bool:
@@ -656,7 +690,7 @@ Dataset: {os.environ.get('DATASET_NAME', 'Not set')}
                 ('Phase 2: Data Aggregation', self.phase_2_data_aggregation),
                 ('Phase 3: User Segmentation', self.phase_3_user_segmentation),
                 ('Phase 4: Quality Assurance', self.phase_4_quality_assurance),
-                ('Phase 5: LLM Insights Generation', self.phase_5_llm_insights),
+                ('Phase 5: Multi-LLM Insights Generation', self.phase_5_llm_insights),
                 ('Phase 6: Final Reporting', self.phase_6_final_reporting)
             ]
         
@@ -774,6 +808,14 @@ Examples:
                        help='Weight for variance confidence in segment confidence calculation (default: 0.4)')
     parser.add_argument('--confidence-completeness-weight', type=float, default=0.2,
                        help='Weight for completeness confidence in segment confidence calculation (default: 0.2)')
+    
+    # Phase control options
+    parser.add_argument('--skip-phase-4', action='store_true',
+                       help='Skip Phase 4 (Quality Validation) and go directly to Phase 5 (LLM Insights)')
+    parser.add_argument('--force-phase-3-data', action='store_true',
+                       help='Force use of Phase 3 data even if Phase 4 validated data exists')
+    parser.add_argument('--insights-depth', choices=['summary', 'detailed', 'comprehensive'],
+                       default='comprehensive', help='Depth of LLM insights generation (default: comprehensive)')
     
     # Execution options
     parser.add_argument('--continue-on-error', action='store_true',

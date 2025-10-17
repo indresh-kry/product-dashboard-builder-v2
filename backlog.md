@@ -7,6 +7,84 @@ This document tracks future improvements and enhancements for the analysis workf
 - [ ] **Add description generated via LLM to enrich data further
 - [ ] **Collapse output tables to limited number of tables
 - [ ] **Collapse extraneous scripts to a single reference script
+- [ ] **Visualisation for LLM
+- [ ] **A/B recommendation for LLM
+
+## Product Lead Feedback Implementation (CRITICAL - Week 1-2)
+
+### 1. Strict JSON Schema Enforcement
+- [ ] **Create standardized JSON schemas for each analyst type**
+- [ ] **Implement schema validation with blocking on parsing errors**
+- [ ] **Add required fields: units, definitions, confidence intervals**
+- [ ] **Remove all 'raw_response' and 'parsing_error' fallbacks**
+- [ ] **Add schema versioning for backward compatibility**
+
+### 2. Metric Definitions & Units
+- [ ] **Create metric_definitions.json with formulas and units**
+- [ ] **Add units to all metrics (seconds, minutes, percentages, etc.)**
+- [ ] **Specify calculation methods (mean vs median, rolling windows)**
+- [ ] **Include confidence intervals and sample sizes per metric**
+- [ ] **Add benchmark values and industry standards**
+
+### 3. Data Quality Gating
+- [ ] **Implement field-level validation before analysis**
+- [ ] **Flag revenue insights as low confidence if core fields are null**
+- [ ] **Surface which fields are used to backfill missing data**
+- [ ] **Add data lineage tracking for all derived metrics**
+- [ ] **Create data quality scoring system with field-level validation**
+
+### 4. Cohort Methodology Clarification
+- [ ] **Specify exact cohorting method (install date vs first seen)**
+- [ ] **Define retention calculation (classic vs range-based)**
+- [ ] **Add cohort size confidence intervals**
+- [ ] **Include cohort definition in all retention analysis**
+- [ ] **Add statistical significance testing for cohort analysis**
+
+## Product Lead Feedback Implementation (HIGH PRIORITY - Week 3-4)
+
+### 5. Funnel Specifications
+- [ ] **Define exact event names and thresholds for each funnel step**
+- [ ] **Add step-to-step conversion rates with confidence intervals**
+- [ ] **Include median time-to-step calculations**
+- [ ] **Segment funnels by source/geo/device with statistical significance**
+- [ ] **Add funnel drop-off analysis with reasons**
+
+### 6. North-Star Tables
+- [ ] **Create ARPDAU calculations by segment and country**
+- [ ] **Add payer percentage and AOV metrics**
+- [ ] **Include repeat purchase rate analysis**
+- [ ] **Define segment thresholds (free/minnow/dolphin/whale)**
+- [ ] **Track segment movement over time (upgrade/downgrade rates)**
+
+### 7. Confidence Intervals & Sample Sizes
+- [ ] **Replace global confidence with per-insight confidence**
+- [ ] **Add sample size requirements for each metric type**
+- [ ] **Include statistical significance testing**
+- [ ] **Add confidence bands for all trend analysis**
+- [ ] **Implement power analysis for sample size calculations**
+
+### 8. Experiment Scaffolding
+- [ ] **Define primary metrics for each recommendation**
+- [ ] **Add guardrail metrics (retention, ARPDAU)**
+- [ ] **Calculate MDE (Minimum Detectable Effect)**
+- [ ] **Include sample size and power calculations**
+- [ ] **Add experiment design templates**
+
+## Product Lead Feedback Implementation (MEDIUM PRIORITY - Week 5-6)
+
+### 9. Geographic Operations Detail
+- [ ] **Add top payment gateways for IN/BD markets**
+- [ ] **Include payment success rates and refund rates**
+- [ ] **Add localization coverage (strings % translated)**
+- [ ] **Include currency conversion and local payment preferences**
+- [ ] **Add regional compliance and regulatory considerations**
+
+### 10. Acquisition Analysis
+- [ ] **Integrate campaign-level spend/install/ROAS data**
+- [ ] **Tie acquisition data to new_user_ratio trajectory**
+- [ ] **Add channel performance analysis**
+- [ ] **Include cost per acquisition (CPA) metrics**
+- [ ] **Add attribution modeling and conversion tracking**
 
 ## High Priority Items
 
