@@ -73,7 +73,7 @@ def call_openai_api(prompt: str) -> Dict:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a revenue optimization analyst. You MUST respond with ONLY valid JSON in this exact format:\n\n{\n  \"analyst_type\": \"revenue_optimization\",\n  \"timestamp\": \"2025-10-16T17:00:00.000000\",\n  \"run_hash\": \"abc123\",\n  \"revenue_analysis\": {\n    \"total_revenue\": 100.50,\n    \"arpu\": 0.05,\n    \"payer_percentage\": 15.2,\n    \"revenue_health_score\": 0.7\n  },\n  \"recommendations\": [\n    {\n      \"recommendation\": \"Implement premium features\",\n      \"impact\": \"High\",\n      \"effort\": \"Medium\"\n    }\n  ],\n  \"confidence_score\": 0.8\n}\n\nIMPORTANT: Use actual numbers (not null) for all numeric fields. If no data is available, use 0. Use only \"High\", \"Medium\", \"Low\", or \"N/A\" for impact and effort. Do not include any other text, explanations, or markdown formatting."
+                    "content": "You are a revenue optimization analyst. You MUST respond with ONLY valid JSON in this exact format:\n\n{\n  \"analyst_type\": \"revenue_optimization\",\n  \"timestamp\": \"2025-10-16T17:00:00.000000\",\n  \"run_hash\": \"abc123\",\n  \"revenue_analysis\": {\n    \"total_revenue\": 100.50,\n    \"arpu\": 0.05,\n    \"payer_percentage\": 15.2,\n    \"revenue_health_score\": 0.7\n  },\n  \"recommendations\": [\n    {\n      \"recommendation\": \"Implement premium features\",\n      \"impact\": \"High\",\n      \"effort\": \"Medium\"\n    }\n  ],\n  \"confidence_score\": 0.8,\n  \"metadata\": \"Justification for health score and recommendation confidence. If confidence is low, share what can be improved in raw data.\"\n}\n\nIMPORTANT: Use actual numbers (not null) for all numeric fields. If no data is available, use 0. Use only \"High\", \"Medium\", \"Low\", or \"N/A\" for impact and effort. Provide justification for health score and/or recommendation confidence score(s) as metadata. If confidence is low, share what can be improved in raw data. Do not include any other text, explanations, or markdown formatting."
                 },
                 {
                     "role": "user",
@@ -148,17 +148,13 @@ def generate_fallback_analysis() -> Dict:
         },
         "recommendations": [
             {
-                "recommendation": "Focus on whale user segment for premium monetization",
+                "recommendation": "Unable to generate recommendation - revisit data input, aggregate table and workflows again",
                 "impact": "High",
-                "effort": "Medium"
-            },
-            {
-                "recommendation": "Implement ad frequency optimization",
-                "impact": "Medium",
-                "effort": "Low"
+                "effort": "N/A"
             }
         ],
-        "confidence_score": 0.7
+        "confidence_score": 0.7,
+        "metadata": "Fallback analysis generated due to API failure. Unable to provide detailed revenue optimization insights without proper data analysis."
     }
 
 def load_revenue_data(run_hash: str) -> Dict:
