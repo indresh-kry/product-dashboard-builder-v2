@@ -42,6 +42,14 @@ except ImportError:
     LLMSchemaValidator = None
     SchemaValidationError = Exception
 
+# Import error logger
+try:
+    from scripts.error_logger import get_error_logger, log_script_error, log_validation_failure
+    ERROR_LOGGER_AVAILABLE = True
+except ImportError:
+    ERROR_LOGGER_AVAILABLE = False
+    print("⚠️ Warning: Error logger not available. Install error_logger.py", file=sys.stderr)
+
 def call_openai_api(prompt: str) -> Dict:
     """Call OpenAI API to generate revenue optimization insights."""
     print("🤖 Calling OpenAI API for revenue optimization analysis...", file=sys.stderr)
@@ -129,6 +137,16 @@ def call_openai_api(prompt: str) -> Dict:
             }
             
     except Exception as e:
+        # Log API error
+        if ERROR_LOGGER_AVAILABLE:
+            run_hash = os.environ.get('RUN_HASH', 'unknown')
+            error_logger = get_error_logger(run_hash)
+            error_logger.log_api_error(
+                script_name="llm_child_revenue_optimization_v1.py",
+                api_name="OpenAI",
+                api_error=str(e)
+            )
+        
         print(f"❌ OpenAI API call failed: {str(e)}", file=sys.stderr)
         print("🔄 Generating fallback revenue analysis...", file=sys.stderr)
         return generate_fallback_analysis()
@@ -252,6 +270,15 @@ def main():
             is_valid, parsed_data, error = validator.validate_response(json.dumps(insights), 'revenue_optimization')
             
             if not is_valid:
+                # Log validation error
+                if ERROR_LOGGER_AVAILABLE:
+                    log_validation_failure(
+                        script_name="llm_child_revenue_optimization_v1.py",
+                        validation_type="SchemaValidation",
+                        error=str(error),
+                        run_hash=run_hash
+                    )
+                
                 print(f"❌ Schema validation failed: {error}", file=sys.stderr)
                 print("🔍 **DEBUGGING: LLM Response Analysis**", file=sys.stderr)
                 print("=" * 50, file=sys.stderr)
@@ -275,10 +302,23 @@ def main():
         print(json.dumps(insights, indent=2, default=str))
         return 0
     except SchemaValidationError as e:
+        # Log schema validation error
+        if ERROR_LOGGER_AVAILABLE:
+            log_validation_failure(
+                script_name="llm_child_revenue_optimization_v1.py",
+                validation_type="SchemaValidationError",
+                error=str(e),
+                run_hash=run_hash
+            )
+        
         print(f"❌ Schema validation error: {str(e)}", file=sys.stderr)
         print("🛑 Blocking execution due to schema validation failure", file=sys.stderr)
         return 1
     except Exception as e:
+        # Log general error
+        if ERROR_LOGGER_AVAILABLE:
+            log_script_error("llm_child_revenue_optimization_v1.py", e, run_hash)
+        
         print(f"❌ Error during analysis: {str(e)}", file=sys.stderr)
         return 1
 

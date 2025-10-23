@@ -27,6 +27,14 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import secrets
 
+# Import error logger
+try:
+    from scripts.error_logger import get_error_logger, log_script_error
+    ERROR_LOGGER_AVAILABLE = True
+except ImportError:
+    ERROR_LOGGER_AVAILABLE = False
+    print("⚠️ Warning: Error logger not available. Install error_logger.py", file=sys.stderr)
+
 # Add scripts directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
@@ -228,12 +236,20 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
             json.dump(skipped_report, f, indent=2)
     
     def _execute_script(self, script_path: str, run_hash: str, phase_name: str) -> Tuple[bool, str]:
-        """Execute a Python script with proper environment setup."""
+        """Execute a Python script with proper environment setup and error logging."""
         try:
             # Load environment variables
             env_file = Path(f"run_logs/{run_hash}/.env")
             if not env_file.exists():
-                return False, f"Environment file not found: {env_file}"
+                error_msg = f"Environment file not found: {env_file}"
+                if ERROR_LOGGER_AVAILABLE:
+                    error_logger = get_error_logger(run_hash)
+                    error_logger.log_error(
+                        script_name=os.path.basename(script_path),
+                        error_type="ConfigurationError",
+                        error_message=error_msg
+                    )
+                return False, error_msg
             
             # Set up environment
             env = os.environ.copy()
@@ -258,12 +274,36 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
             if result.returncode == 0:
                 return True, result.stdout
             else:
+                # Log script failure with detailed error information
+                if ERROR_LOGGER_AVAILABLE:
+                    error_logger = get_error_logger(run_hash)
+                    error_logger.log_script_failure(
+                        script_name=os.path.basename(script_path),
+                        return_code=result.returncode,
+                        stderr_output=result.stderr,
+                        stdout_output=result.stdout
+                    )
                 return False, f"Script failed with return code {result.returncode}: {result.stderr}"
                 
         except subprocess.TimeoutExpired:
-            return False, f"Script timed out after {self.config['timeout_seconds']} seconds"
+            error_msg = f"Script timed out after {self.config['timeout_seconds']} seconds"
+            if ERROR_LOGGER_AVAILABLE:
+                error_logger = get_error_logger(run_hash)
+                error_logger.log_error(
+                    script_name=os.path.basename(script_path),
+                    error_type="TimeoutError",
+                    error_message=error_msg,
+                    error_details={
+                        "timeout_seconds": self.config['timeout_seconds'],
+                        "phase": phase_name
+                    }
+                )
+            return False, error_msg
         except Exception as e:
-            return False, f"Error executing script: {str(e)}"
+            error_msg = f"Error executing script: {str(e)}"
+            if ERROR_LOGGER_AVAILABLE:
+                log_script_error(os.path.basename(script_path), e, run_hash)
+            return False, error_msg
     
     def phase_0_system_initialization(self, run_hash: str, args: argparse.Namespace) -> bool:
         """
@@ -703,11 +743,29 @@ Dataset: {os.environ.get('DATASET_NAME', 'Not set')}
                 
                 if not success:
                     all_success = False
+                    # Log phase failure
+                    if ERROR_LOGGER_AVAILABLE:
+                        error_logger = get_error_logger(self.run_hash)
+                        error_logger.log_error(
+                            script_name="analysis_workflow_orchestrator.py",
+                            error_type="PhaseFailure",
+                            error_message=f"Phase {phase_name} failed",
+                            error_details={
+                                "phase_name": phase_name,
+                                "run_hash": self.run_hash,
+                                "continue_on_error": args.continue_on_error
+                            }
+                        )
+                    
                     if not args.continue_on_error:
                         print(f"\n❌ Workflow stopped due to failure in {phase_name}")
                         break
                         
             except Exception as e:
+                # Log unexpected error
+                if ERROR_LOGGER_AVAILABLE:
+                    log_script_error("analysis_workflow_orchestrator.py", e, self.run_hash)
+                
                 print(f"\n❌ Unexpected error in {phase_name}: {str(e)}")
                 self.phase_results[phase_name] = False
                 all_success = False
@@ -731,6 +789,13 @@ Results: {sum(self.phase_results.values())}/{len(self.phase_results)} phases suc
         if all_success:
             print(f"📁 Results available at: run_logs/{self.run_hash}/outputs/")
             print(f"📋 Run summary: run_logs/{self.run_hash}/outputs/reports/run_summary.md")
+        else:
+            # Generate error report if there were failures
+            if ERROR_LOGGER_AVAILABLE:
+                error_logger = get_error_logger(self.run_hash)
+                bug_report = error_logger.create_bug_report()
+                print(f"🐛 Error report available at: run_logs/{self.run_hash}/logs/bug_report.json")
+                print(f"📋 Error log available at: run_logs/{self.run_hash}/logs/errors.log")
         
         return all_success
 
