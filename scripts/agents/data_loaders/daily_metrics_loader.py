@@ -21,7 +21,7 @@ class DailyMetricsDataLoader(BaseDataLoader):
         data = {}
         
         # Load daily metrics CSV
-        daily_metrics_path = self.get_file_path("outputs/segments/daily_metrics/daily_metrics.csv")
+        daily_metrics_path = self.get_file_path("outputs/segments/daily/dau_by_date.csv")
         daily_metrics = self.load_file(daily_metrics_path, 'csv')
         
         if daily_metrics is not None:
@@ -42,10 +42,10 @@ class DailyMetricsDataLoader(BaseDataLoader):
             data['summary'] = {'error': 'Daily metrics data not found'}
         
         # Load any additional daily metrics files
-        daily_dir = self.get_file_path("outputs/segments/daily_metrics")
+        daily_dir = self.get_file_path("outputs/segments/daily")
         if daily_dir.exists():
             for file_path in daily_dir.glob("*.csv"):
-                if file_path.name != "daily_metrics.csv":
+                if file_path.name != "dau_by_date.csv":
                     file_data = self.load_file(file_path, 'csv')
                     if file_data is not None:
                         data[f"daily_{file_path.stem}"] = file_data

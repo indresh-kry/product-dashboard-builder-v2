@@ -68,7 +68,8 @@ Provide your analysis in the following JSON structure:
       "segment": "segment name",
       "finding": "key finding",
       "impact": "High/Medium/Low",
-      "recommendation": "actionable recommendation"
+      "recommendation": "actionable recommendation",
+      "evidence": "specific data points, percentages, or metrics that support this finding"
     }
   ],
   "recommendations": [
@@ -76,7 +77,8 @@ Provide your analysis in the following JSON structure:
       "category": "category name",
       "priority": "High/Medium/Low",
       "action": "specific action to take",
-      "expected_impact": "expected outcome"
+      "expected_impact": "expected outcome",
+      "evidence": "data-driven justification for this recommendation"
     }
   ],
   "data_quality": {
@@ -89,8 +91,11 @@ Provide your analysis in the following JSON structure:
 ```
 
 **Key Requirements:**
-- Focus on actionable insights
-- Provide specific recommendations
-- Assess data quality
+- Focus on actionable insights with specific, measurable recommendations
+- AVOID generic recommendations like "add new features" or "improve existing ones"
+- Provide specific evidence (data points, percentages, metrics) to support every finding
+- Include concrete numbers, dates, and measurable outcomes
+- Assess data quality with specific examples
 - Include confidence levels in metadata
-- Highlight any data limitations or concerns"""
+- Highlight any data limitations or concerns
+- Make recommendations specific to the actual data patterns observed"""

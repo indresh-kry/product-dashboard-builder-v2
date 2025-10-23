@@ -8,6 +8,7 @@ Data loader for user segmentation analysis.
 """
 
 import sys
+import json
 from pathlib import Path
 from typing import Dict, Any
 from .base_loader import BaseDataLoader
@@ -20,8 +21,8 @@ class UserSegmentationDataLoader(BaseDataLoader):
         data = {}
         
         # Load user segments CSV
-        segments_path = self.get_file_path("outputs/segments/user_segments/user_segments.csv")
-        segments = self.load_file(segments_path, 'csv')
+        segments_path = self.get_file_path("outputs/segments/segment_analysis_report.json")
+        segments = self.load_file(segments_path, 'json')
         
         if segments is not None:
             data['user_segments'] = segments

@@ -8,6 +8,7 @@ Data loader for data quality analysis.
 """
 
 import sys
+import json
 from pathlib import Path
 from typing import Dict, Any
 from .base_loader import BaseDataLoader
@@ -20,7 +21,7 @@ class DataQualityDataLoader(BaseDataLoader):
         data = {}
         
         # Load data quality report
-        quality_path = self.get_file_path("outputs/insights/data_quality_report.json")
+        quality_path = self.get_file_path("outputs/quality_validation/quality_validation_report.json")
         quality_data = self.load_file(quality_path, 'json')
         
         if quality_data is not None:

@@ -20,7 +20,7 @@ class GeographicDataLoader(BaseDataLoader):
         data = {}
         
         # Load geographic data CSV
-        geo_path = self.get_file_path("outputs/segments/geographic/geographic_data.csv")
+        geo_path = self.get_file_path("outputs/segments/daily/revenue_by_country.csv")
         geo_data = self.load_file(geo_path, 'csv')
         
         if geo_data is not None:

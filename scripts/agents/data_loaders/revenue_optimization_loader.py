@@ -20,7 +20,7 @@ class RevenueOptimizationDataLoader(BaseDataLoader):
         data = {}
         
         # Load revenue data CSV
-        revenue_path = self.get_file_path("outputs/segments/revenue/revenue_by_cohort_date.csv")
+        revenue_path = self.get_file_path("outputs/segments/daily/revenue_by_date.csv")
         revenue_data = self.load_file(revenue_path, 'csv')
         
         if revenue_data is not None:
