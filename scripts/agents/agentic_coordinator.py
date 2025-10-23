@@ -82,6 +82,9 @@ class AgenticCoordinator:
         # Save results
         self._save_results(run_hash, results)
         
+        # Generate human-readable markdown report
+        self._generate_markdown_report(run_hash, results)
+        
         print(f"🎯 Analysis completed. Processed {len(results['agents_processed'])} agents", file=sys.stderr)
         
         return results
@@ -113,6 +116,163 @@ class AgenticCoordinator:
             
         except Exception as e:
             print(f"⚠️ Error saving results: {e}", file=sys.stderr)
+    
+    def _generate_markdown_report(self, run_hash: str, results: Dict[str, Any]):
+        """Generate human-readable markdown report from agent results."""
+        try:
+            output_dir = Path(f"run_logs/{run_hash}/outputs/insights")
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate markdown content
+            markdown_content = self._create_markdown_content(results)
+            
+            # Save markdown report
+            markdown_path = output_dir / "agentic_insights_report.md"
+            with open(markdown_path, 'w') as f:
+                f.write(markdown_content)
+            
+            print(f"📄 Markdown report saved to: {markdown_path}", file=sys.stderr)
+            
+        except Exception as e:
+            print(f"⚠️ Error generating markdown report: {e}", file=sys.stderr)
+    
+    def _create_markdown_content(self, results: Dict[str, Any]) -> str:
+        """Create markdown content from agent results."""
+        content = []
+        
+        # Header
+        content.append("# Agentic Insights Report")
+        content.append("")
+        content.append(f"**Run Hash:** {results['run_hash']}")
+        content.append(f"**Generated:** {results['timestamp']}")
+        content.append(f"**Agents Processed:** {len(results['agents_processed'])}")
+        content.append("")
+        
+        # Summary
+        summary = results['summary']
+        content.append("## Executive Summary")
+        content.append("")
+        content.append(f"- **Total Agents:** {summary['total_agents']}")
+        content.append(f"- **Successful:** {summary['successful_agents']}")
+        content.append(f"- **Failed:** {summary['failed_agents']}")
+        content.append(f"- **Errors:** {summary['errors']}")
+        content.append("")
+        
+        # Agent Results
+        content.append("## Agent Analysis Results")
+        content.append("")
+        
+        for agent_type in results['agents_processed']:
+            agent_result = results['agent_results'].get(agent_type, {})
+            
+            content.append(f"### {agent_type.replace('_', ' ').title()}")
+            content.append("")
+            
+            if 'error' in agent_result:
+                content.append(f"❌ **Error:** {agent_result['error']}")
+                content.append("")
+            else:
+                # Data summary
+                if 'data' in agent_result and 'summary' in agent_result['data']:
+                    data_summary = agent_result['data']['summary']
+                    if 'error' in data_summary:
+                        content.append(f"⚠️ **Data Status:** {data_summary['error']}")
+                    else:
+                        content.append("✅ **Data Status:** Data loaded successfully")
+                        if 'total_days' in data_summary:
+                            content.append(f"- **Days Analyzed:** {data_summary['total_days']}")
+                        if 'date_range' in data_summary:
+                            date_range = data_summary['date_range']
+                            content.append(f"- **Date Range:** {date_range.get('start', 'N/A')} to {date_range.get('end', 'N/A')}")
+                        if 'metrics_available' in data_summary:
+                            content.append(f"- **Metrics Available:** {', '.join(data_summary['metrics_available'])}")
+                content.append("")
+                
+                # LLM Response
+                if 'llm_response' in agent_result:
+                    llm_response = agent_result['llm_response']
+                    if llm_response.get('success'):
+                        content.append("🤖 **LLM Analysis:** Completed successfully")
+                        if 'parsed_response' in llm_response and llm_response['parsed_response']:
+                            parsed = llm_response['parsed_response']
+                            
+                            # Summary
+                            if 'summary' in parsed:
+                                content.append(f"**Summary:** {parsed['summary']}")
+                                content.append("")
+                            
+                            # Insights
+                            if 'insights' in parsed and parsed['insights']:
+                                content.append("**Key Insights:**")
+                                content.append("")
+                                for insight in parsed['insights']:
+                                    # Get the appropriate key for the insight type
+                                    insight_key = insight.get('metric') or insight.get('segment') or insight.get('region') or insight.get('cohort') or insight.get('issue') or 'Unknown'
+                                    content.append(f"- **{insight_key}:** {insight.get('finding', 'N/A')}")
+                                    if 'evidence' in insight:
+                                        content.append(f"  - *Evidence:* {insight['evidence']}")
+                                    if 'recommendation' in insight:
+                                        content.append(f"  - *Recommendation:* {insight['recommendation']}")
+                                content.append("")
+                            
+                            # Recommendations
+                            if 'recommendations' in parsed and parsed['recommendations']:
+                                content.append("**Recommendations:**")
+                                content.append("")
+                                for rec in parsed['recommendations']:
+                                    content.append(f"- **{rec.get('category', 'General')}:** {rec.get('action', 'N/A')}")
+                                    if 'priority' in rec:
+                                        content.append(f"  - *Priority:* {rec['priority']}")
+                                    if 'expected_impact' in rec:
+                                        content.append(f"  - *Expected Impact:* {rec['expected_impact']}")
+                                    if 'evidence' in rec:
+                                        content.append(f"  - *Evidence:* {rec['evidence']}")
+                                content.append("")
+                            
+                            # Data Quality
+                            if 'data_quality' in parsed and parsed['data_quality']:
+                                content.append("**Data Quality Assessment:**")
+                                content.append("")
+                                dq = parsed['data_quality']
+                                if 'completeness' in dq:
+                                    content.append(f"- **Completeness:** {dq['completeness']}")
+                                if 'consistency' in dq:
+                                    content.append(f"- **Consistency:** {dq['consistency']}")
+                                if 'issues' in dq and dq['issues']:
+                                    content.append("- **Issues:**")
+                                    for issue in dq['issues']:
+                                        content.append(f"  - {issue}")
+                                content.append("")
+                            
+                            # Metadata
+                            if 'metadata' in parsed:
+                                content.append(f"**Additional Notes:** {parsed['metadata']}")
+                                content.append("")
+                    else:
+                        content.append("❌ **LLM Analysis:** Failed")
+                        if 'error' in llm_response:
+                            content.append(f"**Error:** {llm_response['error']}")
+                        content.append("")
+                else:
+                    content.append("⚠️ **LLM Analysis:** Not available")
+                    content.append("")
+        
+        # Errors section
+        if results['errors']:
+            content.append("## Errors and Issues")
+            content.append("")
+            for error in results['errors']:
+                content.append(f"- ❌ {error}")
+            content.append("")
+        
+        # Footer
+        content.append("---")
+        content.append("")
+        content.append("*This report was generated by the Agentic LLM Framework v2.0.0*")
+        content.append("")
+        content.append("*For technical details, see the corresponding JSON files in the insights directory.*")
+        
+        return "\n".join(content)
     
     def get_agent_status(self, agent_type: str) -> Dict[str, Any]:
         """Get status of a specific agent."""
