@@ -14,6 +14,7 @@ Dependencies:
 - os: Environment variable access
 """
 import os
+import sys
 import json
 import pandas as pd
 from datetime import datetime
@@ -24,7 +25,7 @@ try:
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
-    print("⚠️ Warning: OpenAI library not available. Install with: pip install openai")
+    print("⚠️ Warning: OpenAI library not available. Install with: pip install openai", file=sys.stderr)
 
 # Import schema validator
 try:
@@ -37,13 +38,13 @@ try:
     
     from scripts.schema_validator import LLMSchemaValidator, SchemaValidationError
 except ImportError:
-    print("⚠️ Warning: Schema validator not found. Running without validation.")
+    print("⚠️ Warning: Schema validator not found. Running without validation.", file=sys.stderr)
     LLMSchemaValidator = None
     SchemaValidationError = Exception
 
 def call_openai_api(prompt: str) -> Dict:
     """Call OpenAI API to generate revenue optimization insights."""
-    print("🤖 Calling OpenAI API for revenue optimization analysis...")
+    print("🤖 Calling OpenAI API for revenue optimization analysis...", file=sys.stderr)
     
     # Get API key from environment or creds.json
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -86,17 +87,17 @@ def call_openai_api(prompt: str) -> Dict:
         
         content = response.choices[0].message.content
         
-        print("🔍 **DEBUGGING: Raw LLM Response**")
-        print("=" * 40)
-        print(f"📄 **RAW CONTENT:**")
-        print(content)
-        print("=" * 40)
+        print("🔍 **DEBUGGING: Raw LLM Response**", file=sys.stderr)
+        print("=" * 40, file=sys.stderr)
+        print(f"📄 **RAW CONTENT:**", file=sys.stderr)
+        print(content, file=sys.stderr)
+        print("=" * 40, file=sys.stderr)
         
         # Try to parse JSON response
         try:
             # First try direct JSON parsing
             parsed = json.loads(content)
-            print("✅ Direct JSON parsing successful")
+            print("✅ Direct JSON parsing successful", file=sys.stderr)
             return parsed
         except json.JSONDecodeError:
             # Try to extract JSON from markdown code blocks
@@ -105,7 +106,7 @@ def call_openai_api(prompt: str) -> Dict:
             if json_match:
                 try:
                     parsed = json.loads(json_match.group(1))
-                    print("✅ JSON extracted from markdown code block")
+                    print("✅ JSON extracted from markdown code block", file=sys.stderr)
                     return parsed
                 except json.JSONDecodeError:
                     pass
@@ -115,26 +116,26 @@ def call_openai_api(prompt: str) -> Dict:
             if json_match:
                 try:
                     parsed = json.loads(json_match.group(0))
-                    print("✅ JSON extracted from text")
+                    print("✅ JSON extracted from text", file=sys.stderr)
                     return parsed
                 except json.JSONDecodeError:
                     pass
             
             # If all parsing attempts fail, return error structure
-            print("❌ Failed to parse JSON from response")
+            print("❌ Failed to parse JSON from response", file=sys.stderr)
             return {
                 "raw_response": content,
                 "parsing_error": "Response was not in expected JSON format"
             }
             
     except Exception as e:
-        print(f"❌ OpenAI API call failed: {str(e)}")
-        print("🔄 Generating fallback revenue analysis...")
+        print(f"❌ OpenAI API call failed: {str(e)}", file=sys.stderr)
+        print("🔄 Generating fallback revenue analysis...", file=sys.stderr)
         return generate_fallback_analysis()
 
 def generate_fallback_analysis() -> Dict:
     """Generate fallback revenue analysis when API fails."""
-    print("📊 Generating fallback revenue optimization analysis...")
+    print("📊 Generating fallback revenue optimization analysis...", file=sys.stderr)
     
     return {
         "analyst_type": "revenue_optimization",
@@ -159,7 +160,7 @@ def generate_fallback_analysis() -> Dict:
 
 def load_revenue_data(run_hash: str) -> Dict:
     """Load revenue data from Phase 3 outputs."""
-    print("💰 Loading revenue data...")
+    print("💰 Loading revenue data...", file=sys.stderr)
     
     data = {}
     
@@ -187,7 +188,7 @@ def load_revenue_data(run_hash: str) -> Dict:
 
 def analyze_revenue_optimization(run_hash: str, run_metadata: Dict) -> Dict:
     """Analyze revenue optimization opportunities."""
-    print("💰 Analyzing revenue optimization...")
+    print("💰 Analyzing revenue optimization...", file=sys.stderr)
     
     # Load data
     data = load_revenue_data(run_hash)
@@ -232,8 +233,8 @@ Respond with ONLY the JSON structure as specified in the system prompt.
 
 def main():
     """Main function for revenue optimization analysis."""
-    print("🚀 Starting Revenue Optimization Analyst v1.0.0")
-    print("=" * 80)
+    print("🚀 Starting Revenue Optimization Analyst v1.0.0", file=sys.stderr)
+    print("=" * 80, file=sys.stderr)
     
     run_hash = os.environ.get('RUN_HASH', 'unknown')
     run_metadata = {
@@ -246,37 +247,37 @@ def main():
         
         # Validate response against simplified schema
         if LLMSchemaValidator:
-            print("🔍 Validating response against simplified schema...")
+            print("🔍 Validating response against simplified schema...", file=sys.stderr)
             validator = LLMSchemaValidator("schemas/simplified_analyst_schemas.json")
             is_valid, parsed_data, error = validator.validate_response(json.dumps(insights), 'revenue_optimization')
             
             if not is_valid:
-                print(f"❌ Schema validation failed: {error}")
-                print("🔍 **DEBUGGING: LLM Response Analysis**")
-                print("=" * 50)
-                print("📄 **RAW LLM RESPONSE:**")
-                print(json.dumps(insights, indent=2, default=str))
-                print(f"\n🔍 **SCHEMA VALIDATION ERROR:**")
-                print(f"Error: {error}")
-                print(f"Valid: {is_valid}")
-                print("\n🛑 Blocking execution due to schema validation failure")
-                print("💡 **SUGGESTION:** Update LLM prompt to generate proper JSON structure")
+                print(f"❌ Schema validation failed: {error}", file=sys.stderr)
+                print("🔍 **DEBUGGING: LLM Response Analysis**", file=sys.stderr)
+                print("=" * 50, file=sys.stderr)
+                print("📄 **RAW LLM RESPONSE:**", file=sys.stderr)
+                print(json.dumps(insights, indent=2, default=str), file=sys.stderr)
+                print(f"\n🔍 **SCHEMA VALIDATION ERROR:**", file=sys.stderr)
+                print(f"Error: {error}", file=sys.stderr)
+                print(f"Valid: {is_valid}", file=sys.stderr)
+                print("\n🛑 Blocking execution due to schema validation failure", file=sys.stderr)
+                print("💡 **SUGGESTION:** Update LLM prompt to generate proper JSON structure", file=sys.stderr)
                 return 1
             
-            print("✅ Schema validation passed")
+            print("✅ Schema validation passed", file=sys.stderr)
             insights = parsed_data
         else:
-            print("⚠️ Running without schema validation")
+            print("⚠️ Running without schema validation", file=sys.stderr)
         
-        print("✅ Revenue optimization analysis completed!")
-        print(f"📊 Insights: {json.dumps(insights, indent=2, default=str)}")
+        print("✅ Revenue optimization analysis completed!", file=sys.stderr)
+        print(f"📊 Insights: {json.dumps(insights, indent=2, default=str)}", file=sys.stderr)
         return 0
     except SchemaValidationError as e:
-        print(f"❌ Schema validation error: {str(e)}")
-        print("🛑 Blocking execution due to schema validation failure")
+        print(f"❌ Schema validation error: {str(e)}", file=sys.stderr)
+        print("🛑 Blocking execution due to schema validation failure", file=sys.stderr)
         return 1
     except Exception as e:
-        print(f"❌ Error during analysis: {str(e)}")
+        print(f"❌ Error during analysis: {str(e)}", file=sys.stderr)
         return 1
 
 if __name__ == "__main__":
