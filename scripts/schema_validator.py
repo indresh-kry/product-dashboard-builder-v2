@@ -27,7 +27,7 @@ try:
     import jsonschema
     from jsonschema import validate, ValidationError
 except ImportError:
-    print("❌ Error: jsonschema library not found. Install with: pip install jsonschema")
+    print("❌ Error: jsonschema library not found. Install with: pip install jsonschema", file=sys.stderr)
     sys.exit(1)
 
 
@@ -61,7 +61,7 @@ class LLMSchemaValidator:
         if "revenue_optimization" in self.schemas.get("analysts", {}):
             simplified_schema_file = schema_file.replace("analyst_schemas.json", "simplified_analyst_schemas.json")
             if os.path.exists(simplified_schema_file):
-                print(f"🔄 Using simplified schema for revenue optimization analyst")
+                print(f"🔄 Using simplified schema for revenue optimization analyst", file=sys.stderr)
                 simplified_schemas = self._load_schemas_from_file(simplified_schema_file)
                 if "revenue_optimization" in simplified_schemas.get("analysts", {}):
                     self.schemas["analysts"]["revenue_optimization"] = simplified_schemas["analysts"]["revenue_optimization"]
@@ -80,11 +80,11 @@ class LLMSchemaValidator:
             with open(schema_path, 'r') as f:
                 schema_data = json.load(f)
                 
-            print(f"✅ Loaded schemas from: {schema_file}")
+            print(f"✅ Loaded schemas from: {schema_file}", file=sys.stderr)
             return schema_data
             
         except Exception as e:
-            print(f"❌ Error loading schemas: {str(e)}")
+            print(f"❌ Error loading schemas: {str(e)}", file=sys.stderr)
             raise SchemaValidationError(f"Failed to load schemas: {str(e)}")
     
     def validate_response(self, response: str, analyst_type: str) -> Tuple[bool, Dict[str, Any], Optional[str]]:
@@ -112,27 +112,27 @@ class LLMSchemaValidator:
             # Validate against schema
             validate(instance=parsed_data, schema=schema)
             
-            print(f"✅ Schema validation passed for {analyst_type}")
+            print(f"✅ Schema validation passed for {analyst_type}", file=sys.stderr)
             return True, parsed_data, None
             
         except json.JSONDecodeError as e:
             error_msg = f"JSON parsing failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"❌ {error_msg}", file=sys.stderr)
             return False, {}, error_msg
             
         except ValidationError as e:
             error_msg = f"Schema validation failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"❌ {error_msg}", file=sys.stderr)
             return False, {}, error_msg
             
         except SchemaValidationError as e:
             error_msg = f"Schema validation error: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"❌ {error_msg}", file=sys.stderr)
             return False, {}, error_msg
             
         except Exception as e:
             error_msg = f"Unexpected validation error: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"❌ {error_msg}", file=sys.stderr)
             return False, {}, error_msg
     
     def _parse_json_response(self, response: str) -> Dict[str, Any]:
@@ -189,7 +189,7 @@ class LLMSchemaValidator:
         results = {}
         
         for analyst_type, response in responses.items():
-            print(f"🔍 Validating {analyst_type} response...")
+            print(f"🔍 Validating {analyst_type} response...", file=sys.stderr)
             is_valid, parsed_data, error = self.validate_response(response, analyst_type)
             results[analyst_type] = (is_valid, parsed_data, error)
             

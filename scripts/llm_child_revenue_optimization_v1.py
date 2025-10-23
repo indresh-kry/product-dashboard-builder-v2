@@ -271,6 +271,8 @@ def main():
         
         print("✅ Revenue optimization analysis completed!", file=sys.stderr)
         print(f"📊 Insights: {json.dumps(insights, indent=2, default=str)}", file=sys.stderr)
+        # Output the final JSON result to stdout for the multi-insights script
+        print(json.dumps(insights, indent=2, default=str))
         return 0
     except SchemaValidationError as e:
         print(f"❌ Schema validation error: {str(e)}", file=sys.stderr)
