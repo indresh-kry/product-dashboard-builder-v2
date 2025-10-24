@@ -137,6 +137,21 @@ export AGGREGATION_LIMIT='{args.aggregation_limit}'
             env = os.environ.copy()
             env['RUN_HASH'] = run_hash
             
+            # Load environment from .env file if it exists
+            env_file = Path(f"run_logs/{run_hash}/.env")
+            if env_file.exists():
+                with open(env_file, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            # Remove 'export ' prefix if present
+                            if line.startswith('export '):
+                                line = line[7:]
+                            key, value = line.split('=', 1)
+                            # Remove quotes if present
+                            value = value.strip().strip('"').strip("'")
+                            env[key] = value
+            
             # Build command
             cmd = ['python3', script_name]
             if args:
