@@ -1,0 +1,64 @@
+{
+  "agents": {
+    "daily_metrics": {
+      "enabled": true,
+      "data_loader": "DailyMetricsDataLoader",
+      "prompt_generator": "DailyMetricsPromptGenerator",
+      "llm_enabled": true,
+      "priority": 1,
+      "description": "Analyzes daily metrics trends and patterns"
+    },
+    "user_segmentation": {
+      "enabled": true,
+      "data_loader": "UserSegmentationDataLoader",
+      "prompt_generator": "UserSegmentationPromptGenerator",
+      "llm_enabled": true,
+      "priority": 2,
+      "description": "Analyzes user segmentation and behavior patterns"
+    },
+    "geographic": {
+      "enabled": true,
+      "data_loader": "GeographicDataLoader",
+      "prompt_generator": "GeographicPromptGenerator",
+      "llm_enabled": true,
+      "priority": 3,
+      "description": "Analyzes geographic distribution and patterns"
+    },
+    "cohort_retention": {
+      "enabled": true,
+      "data_loader": "CohortRetentionDataLoader",
+      "prompt_generator": "CohortRetentionPromptGenerator",
+      "llm_enabled": true,
+      "priority": 4,
+      "description": "Analyzes cohort retention and lifecycle patterns"
+    },
+    "revenue_optimization": {
+      "enabled": true,
+      "data_loader": "RevenueOptimizationDataLoader",
+      "prompt_generator": "RevenueOptimizationPromptGenerator",
+      "llm_enabled": true,
+      "priority": 5,
+      "description": "Analyzes revenue optimization opportunities"
+    },
+    "data_quality": {
+      "enabled": true,
+      "data_loader": "DataQualityDataLoader",
+      "prompt_generator": "DataQualityPromptGenerator",
+      "llm_enabled": true,
+      "priority": 6,
+      "description": "Analyzes data quality and identifies issues"
+    }
+  },
+  "llm": {
+    "model": "gpt-4",
+    "temperature": 0.3,
+    "max_tokens": 1000,
+    "timeout": 30
+  },
+  "coordination": {
+    "parallel_execution": false,
+    "max_concurrent_agents": 3,
+    "retry_failed_agents": true,
+    "max_retries": 2
+  }
+}
