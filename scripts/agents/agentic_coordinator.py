@@ -158,8 +158,11 @@ class AgenticCoordinator:
                 # Calculate metrics from daily data
                 df = daily_metrics_data
                 
-                # Duration of analysis
-                if 'date' in df.columns:
+                # Duration of analysis - use specified date range from run metadata
+                if run_metadata and 'start_date' in run_metadata and 'end_date' in run_metadata:
+                    metrics['duration'] = f"{run_metadata['start_date']} to {run_metadata['end_date']}"
+                elif 'date' in df.columns:
+                    # Fallback to actual data range if metadata not available
                     start_date = df['date'].min()
                     end_date = df['date'].max()
                     metrics['duration'] = f"{start_date} to {end_date}"

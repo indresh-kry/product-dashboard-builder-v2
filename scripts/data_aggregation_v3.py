@@ -149,7 +149,7 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
             MAX(adjusted_timestamp) as session_end,
             TIMESTAMP_DIFF(MAX(adjusted_timestamp), MIN(adjusted_timestamp), MINUTE) as session_duration_minutes
         FROM `{dataset_name}`
-        {f"WHERE {where_clause} AND session_id IS NOT NULL" if where_clause else "WHERE session_id IS NOT NULL"}
+        {"WHERE " + where_clause + " AND session_id IS NOT NULL" if where_clause else "WHERE session_id IS NOT NULL"}
         GROUP BY session_id, DATE(adjusted_timestamp)
     ),
     
@@ -158,7 +158,7 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
             COALESCE(NULLIF({primary_user_id}, ''), device_id) as user_id,
             MIN(DATE(adjusted_timestamp)) as cohort_date
         FROM `{dataset_name}`
-        {f"WHERE {where_clause}" if where_clause else ""}
+        {"WHERE " + where_clause if where_clause else ""}
         GROUP BY COALESCE(NULLIF({primary_user_id}, ''), device_id)
     )
     
@@ -283,7 +283,7 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
     FROM `{dataset_name}` t
     LEFT JOIN session_durations sd ON t.session_id = sd.session_id AND DATE(t.adjusted_timestamp) = sd.date
     LEFT JOIN user_cohorts uc ON COALESCE(NULLIF({primary_user_id}, ''), device_id) = uc.user_id
-    {f"WHERE {where_clause}" if where_clause else ""}
+    {"WHERE " + where_clause if where_clause else ""}
     GROUP BY 
         COALESCE(NULLIF({primary_user_id}, ''), device_id),
         device_id,
