@@ -1,0 +1,3 @@
+*.sql
+run_logs/
+.DS_Store
