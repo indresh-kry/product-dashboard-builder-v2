@@ -20,7 +20,7 @@ class CohortRetentionDataLoader(BaseDataLoader):
         data = {}
         
         # Load cohort retention CSV
-        cohort_path = self.get_file_path("outputs/segments/cohort/retention_by_cohort.csv")
+        cohort_path = self.get_file_path("outputs/segments/cohort/revenue_by_cohort_date.csv")
         cohort_data = self.load_file(cohort_path, 'csv')
         
         if cohort_data is not None:

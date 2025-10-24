@@ -8,6 +8,7 @@ Base class for all prompt generators.
 Provides common functionality for generating analysis prompts.
 """
 
+import json
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 from datetime import datetime

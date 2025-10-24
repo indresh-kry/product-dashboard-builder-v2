@@ -45,7 +45,7 @@ def test_with_fresh_200k_data():
     print(f"  📊 Aggregation Limit: {run_metadata['aggregation_limit']}")
     
     # Check if data exists
-    data_dir = Path(f"run_logs/{run_hash}/outputs")
+    data_dir = Path(f"../run_logs/{run_hash}/outputs")
     if not data_dir.exists():
         print(f"  ❌ Data directory not found: {data_dir}")
         return False

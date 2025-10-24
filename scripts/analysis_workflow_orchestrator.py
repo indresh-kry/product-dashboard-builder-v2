@@ -335,7 +335,7 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
             
             # Initialize system health checks
             success, output = self._execute_script(
-                "scripts/system_health_check.py", 
+                "system_health_check.py", 
                 run_hash, 
                 "System Health Check"
             )
@@ -362,7 +362,7 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
         
         try:
             # Use enhanced schema discovery script
-            script_path = "scripts/schema_discovery_v3.py"
+            script_path = "schema_discovery_v3.py"
             
             success, output = self._execute_script(script_path, run_hash, "Schema Discovery")
             
@@ -394,7 +394,7 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
         
         try:
             # Use final working data aggregation script
-            script_path = "scripts/data_aggregation_v3.py"
+            script_path = "data_aggregation_v3.py"
             
             success, output = self._execute_script(script_path, run_hash, "Data Aggregation")
             
@@ -428,7 +428,7 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
         
         try:
             # Execute user segmentation script
-            script_path = Path("scripts/user_segmentation_v1.py")
+            script_path = Path("user_segmentation_v1.py")
             if not script_path.exists():
                 raise FileNotFoundError(f"User segmentation script not found: {script_path}")
             
@@ -501,7 +501,7 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
                 return True
             
             # Normal Phase 4 execution - use the dummy script
-            script_path = "scripts/quality_validation_v1.py"
+            script_path = "quality_validation_v1.py"
             success, message = self._execute_script(script_path, run_hash, "Phase 4: Quality Assurance")
             
             if success:
@@ -531,7 +531,7 @@ export BIGQUERY_ENABLE_AUDIT='{base_env.get("BIGQUERY_ENABLE_AUDIT", "true")}'
         
         try:
             # Execute Multi-LLM insights generation script
-            script_path = "scripts/llm_insights_multi_v1.py"
+            script_path = "llm_insights_multi_v1.py"
             success, message = self._execute_script(script_path, run_hash, "Phase 5: Multi-LLM Insights Generation")
             
             if success:
