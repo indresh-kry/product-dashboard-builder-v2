@@ -85,7 +85,7 @@ def build_where_clause(app_filter, date_start, date_end):
         
         conditions.append(f"DATE(adjusted_timestamp) BETWEEN '{extended_start_str}' AND '{date_end}'")
     
-    return "WHERE " + " AND ".join(conditions) if conditions else ""
+    return " AND ".join(conditions) if conditions else ""
 
 def generate_level_fields(events):
     """Generate dynamic level fields based on available events"""
@@ -149,31 +149,30 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
             MAX(adjusted_timestamp) as session_end,
             TIMESTAMP_DIFF(MAX(adjusted_timestamp), MIN(adjusted_timestamp), MINUTE) as session_duration_minutes
         FROM `{dataset_name}`
-        {where_clause}
-        AND session_id IS NOT NULL
+        {f"WHERE {where_clause} AND session_id IS NOT NULL" if where_clause else "WHERE session_id IS NOT NULL"}
         GROUP BY session_id, DATE(adjusted_timestamp)
     ),
     
     user_cohorts AS (
         SELECT 
-            COALESCE({primary_user_id}, device_id) as user_id,
+            COALESCE(NULLIF({primary_user_id}, ''), device_id) as user_id,
             MIN(DATE(adjusted_timestamp)) as cohort_date
         FROM `{dataset_name}`
-        {where_clause}
-        GROUP BY COALESCE({primary_user_id}, device_id)
+        {f"WHERE {where_clause}" if where_clause else ""}
+        GROUP BY COALESCE(NULLIF({primary_user_id}, ''), device_id)
     )
     
     SELECT 
         -- Primary Key
-        COALESCE({primary_user_id}, device_id) as user_id,
+        COALESCE(NULLIF({primary_user_id}, ''), device_id) as user_id,
         device_id,
         DATE(t.adjusted_timestamp) as date,
         
         -- User Cohort Information
         uc.cohort_date,
-        DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), uc.cohort_date, DAY) as days_since_first_event,
+        DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), COALESCE(uc.cohort_date, ANY_VALUE(DATE(t.adjusted_timestamp))), DAY) as days_since_first_event,
         CASE 
-            WHEN DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), uc.cohort_date, DAY) = 0 THEN 'new'
+            WHEN DATE_DIFF(ANY_VALUE(DATE(t.adjusted_timestamp)), COALESCE(uc.cohort_date, ANY_VALUE(DATE(t.adjusted_timestamp))), DAY) = 0 THEN 'new'
             ELSE 'returning'
         END as user_type,
         
@@ -283,16 +282,15 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000):
         
     FROM `{dataset_name}` t
     LEFT JOIN session_durations sd ON t.session_id = sd.session_id AND DATE(t.adjusted_timestamp) = sd.date
-    LEFT JOIN user_cohorts uc ON COALESCE({primary_user_id}, device_id) = uc.user_id
-    {where_clause}
+    LEFT JOIN user_cohorts uc ON COALESCE(NULLIF({primary_user_id}, ''), device_id) = uc.user_id
+    {f"WHERE {where_clause}" if where_clause else ""}
     GROUP BY 
-        COALESCE({primary_user_id}, device_id),
+        COALESCE(NULLIF({primary_user_id}, ''), device_id),
         device_id,
         DATE(t.adjusted_timestamp),
         uc.cohort_date
-    HAVING DATE(ANY_VALUE(t.adjusted_timestamp)) BETWEEN '{date_start}' AND '{date_end}'
     ORDER BY 
-        COALESCE({primary_user_id}, device_id),
+        COALESCE(NULLIF({primary_user_id}, ''), device_id),
         DATE(t.adjusted_timestamp)
     LIMIT {limit};
     """
@@ -342,6 +340,9 @@ def create_bigquery_table(client, query, target_project, target_dataset, table_n
 def export_to_csv(client, query, output_path):
     """Export query results to CSV"""
     print(f"📄 Exporting results to CSV: {output_path}")
+    
+    # Debug: Print the first 200 characters of the query
+    print(f"🔍 Query preview: {query[:200]}...")
     
     try:
         # Execute query
@@ -453,6 +454,12 @@ def main():
         
         # Generate aggregation query
         query = generate_aggregation_query(dataset_name, schema_mapping, aggregation_limit)
+        
+        # Debug logging
+        print(f"🔍 Dataset name: {dataset_name}")
+        print(f"🔍 Primary user ID: {schema_mapping.get('recommendations', {}).get('primary_user_id', 'device_id')}")
+        print(f"🔍 Date start: {os.environ.get('DATE_START', '')}")
+        print(f"🔍 Date end: {os.environ.get('DATE_END', '')}")
         
         # Save query to working directory
         os.makedirs(working_dir, exist_ok=True)
