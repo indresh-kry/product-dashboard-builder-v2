@@ -7,11 +7,11 @@ Executes a streamlined analysis workflow from raw clickstream data through schem
 
 ## Usage
 ```bash
-# Standard workflow (original)
-python analysis_workflow_orchestrator.py
+# Unified workflow (recommended - combines all phases)
+python analysis_workflow_orchestrator_unified.py
 
-# Agentic workflow (recommended)
-python analysis_workflow_orchestrator_agentic.py
+# Direct agentic framework usage (for existing data)
+python -c "from agents.agentic_coordinator import AgenticCoordinator; coordinator = AgenticCoordinator(); results = coordinator.run_analysis('run_hash', run_metadata)"
 ```
 
 ## Options
@@ -927,13 +927,13 @@ The workflow integrates with:
 ### Example Usage
 
 ```bash
-# Standard workflow (original)
+# Unified workflow (recommended - all phases)
 cd scripts
-python analysis_workflow_orchestrator.py
+python analysis_workflow_orchestrator_unified.py --app-filter "com.nukebox.mandir" --date-start "2025-09-15" --date-end "2025-09-30" --raw-data-limit 100 --aggregation-limit 250000
 
-# Agentic workflow (recommended)
+# Direct agentic framework usage (for existing data)
 cd scripts
-python analysis_workflow_orchestrator_agentic.py
+python -c "from agents.agentic_coordinator import AgenticCoordinator; coordinator = AgenticCoordinator(); results = coordinator.run_analysis('run_hash', {'app_filter': 'com.nukebox.mandir'})"
 
 # Test agentic framework
 cd scripts
