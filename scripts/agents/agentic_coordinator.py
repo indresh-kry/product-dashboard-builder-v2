@@ -178,31 +178,41 @@ class AgenticCoordinator:
                     metrics['total_revenue'] = round(total_revenue, 2)
                     metrics['avg_daily_revenue'] = round(df['total_revenue'].mean(), 2)
                 
-                # Calculate retention rates if available
-                if 'returning_user_percentage' in df.columns:
-                    # Use the existing returning user percentage as a proxy for retention
-                    # This represents the percentage of users who are returning (not new)
-                    metrics['avg_d1_retention'] = round(df['returning_user_percentage'].mean(), 1)
-                elif 'returning_users' in df.columns and 'new_users' in df.columns:
-                    # Fallback: calculate a realistic D1 retention approximation
-                    # D1 retention cannot exceed 100% by definition
-                    df_sorted = df.sort_values('date')
-                    d1_retention = []
+                # Calculate true D1 retention using days_since_first_event from aggregated data
+                try:
+                    # Load aggregated data to get true D1 retention
+                    import pandas as pd
+                    agg_df = pd.read_csv(f"run_logs/{results['run_hash']}/outputs/aggregations/aggregated_data.csv")
                     
-                    for i in range(1, len(df_sorted)):
-                        prev_new = df_sorted.iloc[i-1]['new_users']
-                        curr_returning = df_sorted.iloc[i]['returning_users']
+                    if 'days_since_first_event' in agg_df.columns and 'date' in agg_df.columns:
+                        # Calculate true D1 retention: users with days_since_first_event=0 on day N 
+                        # who returned on day N+1 (days_since_first_event=1)
+                        d1_retention_rates = []
+                        dates = sorted(agg_df['date'].unique())
                         
-                        # Realistic D1 retention: some portion of new users from day N returned on day N+1
-                        # This is a conservative estimate since we don't have true cohort data
-                        if prev_new > 0:
-                            # Assume a realistic retention rate based on industry standards (20-40%)
-                            # This is an approximation and should be replaced with actual cohort analysis
-                            estimated_retention = min(40.0, (curr_returning / (curr_returning + prev_new)) * 100)
-                            d1_retention.append(estimated_retention)
-                    
-                    if d1_retention:
-                        metrics['avg_d1_retention'] = round(sum(d1_retention) / len(d1_retention), 1)
+                        for i in range(len(dates) - 1):
+                            current_date = dates[i]
+                            next_date = dates[i + 1]
+                            
+                            # Users who were new on current_date (days_since_first_event = 0)
+                            new_users = len(agg_df[(agg_df['date'] == current_date) & (agg_df['days_since_first_event'] == 0)])
+                            
+                            # Users who returned the next day (days_since_first_event = 1 on next_date)
+                            # These are users who were new on current_date and returned on next_date
+                            retained_users = len(agg_df[(agg_df['date'] == next_date) & (agg_df['days_since_first_event'] == 1)])
+                            
+                            if new_users > 0:
+                                retention_rate = (retained_users / new_users) * 100
+                                d1_retention_rates.append(retention_rate)
+                        
+                        if d1_retention_rates:
+                            metrics['avg_d1_retention'] = round(sum(d1_retention_rates) / len(d1_retention_rates), 1)
+                            
+                except Exception as e:
+                    print(f"⚠️ Error calculating true D1 retention: {e}", file=sys.stderr)
+                    # Fallback to returning user percentage if aggregated data not available
+                    if 'returning_user_percentage' in df.columns:
+                        metrics['avg_d1_retention'] = round(df['returning_user_percentage'].mean(), 1)
                 
                 # Get whale users count if available
                 whale_count = 0
