@@ -79,6 +79,9 @@ class AgenticCoordinator:
         # Generate summary
         results['summary'] = self._generate_summary(results)
         
+        # Store run metadata for business metrics calculation
+        results['run_metadata'] = run_metadata
+        
         # Save results
         self._save_results(run_hash, results)
         
@@ -136,6 +139,78 @@ class AgenticCoordinator:
         except Exception as e:
             print(f"⚠️ Error generating markdown report: {e}", file=sys.stderr)
     
+    def _calculate_business_metrics(self, results: Dict[str, Any], run_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Calculate key business metrics from agent data."""
+        metrics = {}
+        
+        try:
+            # Add app name if available
+            if run_metadata and 'app_filter' in run_metadata:
+                metrics['app_name'] = run_metadata['app_filter']
+            # Get daily metrics data if available
+            daily_metrics_data = None
+            if 'daily_metrics' in results['agent_results']:
+                daily_result = results['agent_results']['daily_metrics']
+                if 'data' in daily_result and 'daily_metrics' in daily_result['data']:
+                    daily_metrics_data = daily_result['data']['daily_metrics']
+            
+            if daily_metrics_data is not None and hasattr(daily_metrics_data, 'columns'):
+                # Calculate metrics from daily data
+                df = daily_metrics_data
+                
+                # Duration of analysis
+                if 'date' in df.columns:
+                    start_date = df['date'].min()
+                    end_date = df['date'].max()
+                    metrics['duration'] = f"{start_date} to {end_date}"
+                
+                # Average daily users
+                if 'total_dau' in df.columns:
+                    metrics['avg_daily_users'] = round(df['total_dau'].mean(), 0)
+                
+                # Average daily new users
+                if 'new_users' in df.columns:
+                    metrics['avg_daily_new_users'] = round(df['new_users'].mean(), 0)
+                
+                # Total revenue
+                if 'total_revenue' in df.columns:
+                    total_revenue = df['total_revenue'].sum()
+                    metrics['total_revenue'] = round(total_revenue, 2)
+                    metrics['avg_daily_revenue'] = round(df['total_revenue'].mean(), 2)
+                
+                # Calculate retention rates if available
+                if 'returning_users' in df.columns and 'new_users' in df.columns:
+                    # D1 retention (simplified - users who returned the next day)
+                    df_sorted = df.sort_values('date')
+                    d1_retention = []
+                    for i in range(1, len(df_sorted)):
+                        prev_new = df_sorted.iloc[i-1]['new_users']
+                        curr_returning = df_sorted.iloc[i]['returning_users']
+                        if prev_new > 0:
+                            d1_retention.append((curr_returning / prev_new) * 100)
+                    
+                    if d1_retention:
+                        metrics['avg_d1_retention'] = round(sum(d1_retention) / len(d1_retention), 1)
+                
+                # Get whale users count if available
+                whale_count = 0
+                try:
+                    if 'daily_revenue_by_type' in results['agent_results'].get('daily_metrics', {}).get('data', {}):
+                        revenue_data = results['agent_results']['daily_metrics']['data']['daily_revenue_by_type']
+                        if hasattr(revenue_data, 'columns') and 'revenue_segment' in revenue_data.columns:
+                            whale_data = revenue_data[revenue_data['revenue_segment'] == 'whale']
+                            if 'revenue_users' in whale_data.columns:
+                                whale_count = whale_data['revenue_users'].sum()
+                except Exception as e:
+                    print(f"⚠️ Error calculating whale users: {e}", file=sys.stderr)
+                
+                metrics['total_whale_users'] = int(whale_count)
+                
+        except Exception as e:
+            print(f"⚠️ Error calculating business metrics: {e}", file=sys.stderr)
+        
+        return metrics
+
     def _create_markdown_content(self, results: Dict[str, Any]) -> str:
         """Create markdown content from agent results."""
         content = []
@@ -147,6 +222,29 @@ class AgenticCoordinator:
         content.append(f"**Generated:** {results['timestamp']}")
         content.append(f"**Agents Processed:** {len(results['agents_processed'])}")
         content.append("")
+        
+        # Business Metrics
+        business_metrics = self._calculate_business_metrics(results, results.get('run_metadata', {}))
+        if business_metrics:
+            content.append("## Key Business Metrics")
+            content.append("")
+            if 'app_name' in business_metrics:
+                content.append(f"- **App Name:** {business_metrics['app_name']}")
+            if 'duration' in business_metrics:
+                content.append(f"- **Analysis Duration:** {business_metrics['duration']}")
+            if 'avg_daily_users' in business_metrics:
+                content.append(f"- **Average Daily Users:** {business_metrics['avg_daily_users']:,.0f}")
+            if 'avg_daily_new_users' in business_metrics:
+                content.append(f"- **Average Daily New Users:** {business_metrics['avg_daily_new_users']:,.0f}")
+            if 'avg_d1_retention' in business_metrics:
+                content.append(f"- **Average D1 Retention:** {business_metrics['avg_d1_retention']:.1f}%")
+            if 'total_revenue' in business_metrics:
+                content.append(f"- **Total Revenue:** ${business_metrics['total_revenue']:,.2f}")
+            if 'avg_daily_revenue' in business_metrics:
+                content.append(f"- **Average Daily Revenue:** ${business_metrics['avg_daily_revenue']:,.2f}")
+            if 'total_whale_users' in business_metrics:
+                content.append(f"- **Total Whale Users:** {business_metrics['total_whale_users']:,}")
+            content.append("")
         
         # Summary
         summary = results['summary']
