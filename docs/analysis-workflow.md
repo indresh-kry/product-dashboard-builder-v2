@@ -31,8 +31,9 @@ python -c "from agents.agentic_coordinator import AgenticCoordinator; coordinato
 6. **User Segmentation**: Defines user segments with statistical grounding
 7. **Quality Assurance**: Runs basic data validation and sanity checks
 8. **Agentic LLM Insights**: Generates AI-powered insights using modular agent framework
-9. **Business Metrics**: Calculates 10 key performance indicators with true D1 retention
-10. **Final Reporting**: Outputs organized findings, data tables, and actionable insights
+9. **Data Visualization**: Creates interactive charts and graphs for key metrics
+10. **Business Metrics**: Calculates 10 key performance indicators with true D1 retention
+11. **Final Reporting**: Outputs organized findings, data tables, actionable insights, and embedded visualizations
 
 ## Core Metrics Generated
 The system generates the following core product metrics based on data availability:
@@ -774,6 +775,51 @@ The agentic framework automatically calculates 10 key business metrics:
 - **Modular Architecture**: Scalable and maintainable agent system
 - **Enhanced Reporting**: Comprehensive markdown reports with business metrics
 
+### Phase 5.5: Data Visualization Generation
+
+The system automatically generates interactive charts and graphs for key metrics:
+
+**Visualization Types Generated:**
+
+1. **📈 User Engagement Trends**
+   - Daily Active Users (DAU) trends
+   - New vs Returning users breakdown
+   - Placed in Daily Metrics section
+
+2. **💰 Revenue Performance**
+   - Daily revenue trends
+   - Revenue by type (IAP, Ad, Subscription)
+   - Placed in Revenue Optimization section
+
+3. **🔄 User Retention Analysis**
+   - D1, D3, D7 retention funnels
+   - Cohort-based retention analysis
+   - Placed in Cohort Retention section
+
+4. **🎯 Event Conversion Funnel**
+   - User progression through app events
+   - Level completion rates
+   - Placed in User Segmentation section
+
+**Technical Implementation:**
+- Charts generated using matplotlib and seaborn
+- High-resolution PNG output for professional quality
+- Automatic integration into markdown reports
+- Contextual placement within relevant analysis sections
+
+**Chart Generation Process:**
+```python
+from agents.visualization_generator import ReportVisualizationGenerator
+
+# Initialize visualization generator
+viz_generator = ReportVisualizationGenerator(run_hash)
+
+# Generate all charts
+charts = viz_generator.generate_all_charts()
+
+# Charts are automatically integrated into markdown reports
+```
+
 ### Phase 6: Final Report Generation
 
 Use the Task tool to launch a general-purpose agent:
@@ -989,8 +1035,13 @@ cat run_logs/{run_hash}/outputs/validation/data_quality_validation.json
 ### Key Output Files
 
 **Agentic Framework Outputs:**
-- `outputs/insights/agentic_insights_report.md` - Human-readable insights with business metrics
+- `outputs/insights/agentic_insights_report.md` - Human-readable insights with business metrics and embedded charts
 - `outputs/insights/agentic_insights.json` - Structured agent results
+- `outputs/insights/visualizations/` - Generated chart files (PNG format)
+  - `dau_trend.png` - Daily Active Users trends
+  - `revenue_trend.png` - Revenue performance charts
+  - `retention_funnel.png` - Retention analysis charts
+  - `event_funnel.png` - Event conversion funnel charts
 - `outputs/insights/` - Individual agent analysis files
 
 **Business Metrics Included:**
