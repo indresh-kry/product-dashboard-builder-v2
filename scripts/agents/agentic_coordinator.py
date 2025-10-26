@@ -129,6 +129,25 @@ class AgenticCoordinator:
             # Generate markdown content
             markdown_content = self._create_markdown_content(results)
             
+            # Generate visualizations
+            try:
+                from .visualization_generator import ReportVisualizationGenerator
+                viz_generator = ReportVisualizationGenerator(run_hash)
+                charts = viz_generator.generate_all_charts()
+                
+                # Add visualization section to content
+                if charts:
+                    viz_section = viz_generator.generate_chart_summary(charts)
+                    # Insert visualizations after Key Business Metrics section
+                    content_parts = markdown_content.split("## Executive Summary")
+                    if len(content_parts) > 1:
+                        markdown_content = content_parts[0] + "\n" + viz_section + "\n## Executive Summary" + content_parts[1]
+                    else:
+                        markdown_content += "\n" + viz_section
+                        
+            except Exception as viz_error:
+                print(f"⚠️ Error generating visualizations: {viz_error}", file=sys.stderr)
+            
             # Save markdown report
             markdown_path = output_dir / "agentic_insights_report.md"
             with open(markdown_path, 'w') as f:
