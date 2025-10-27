@@ -2,10 +2,14 @@
   "type": "service_account",
   "project_id": "your-project-id",
   "private_key_id": "your-private-key-id",
+<<<<<<< HEAD
   "private_key": "-----BEGIN PRIVATE KEY-----
 YOUR_PRIVATE_KEY_HERE
 -----END PRIVATE KEY-----
 ",
+=======
+  "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n",
+>>>>>>> 89f4e77aa113e0fe77c3e2051d83946bab6e4467
   "client_email": "your-service-account@your-project.iam.gserviceaccount.com",
   "client_id": "your-client-id",
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
