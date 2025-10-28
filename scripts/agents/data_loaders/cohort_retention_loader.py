@@ -19,8 +19,8 @@ class CohortRetentionDataLoader(BaseDataLoader):
         """Load cohort retention data."""
         data = {}
         
-        # Load cohort retention CSV
-        cohort_path = self.get_file_path("outputs/segments/cohort/revenue_by_cohort_date.csv")
+        # Load enhanced retention by cohort date CSV (NEW: with D1-D7, D14, D30 retention)
+        cohort_path = self.get_file_path("outputs/segments/cohort/retention_by_cohort_date.csv")
         cohort_data = self.load_file(cohort_path, 'csv')
         
         if cohort_data is not None:
@@ -30,8 +30,19 @@ class CohortRetentionDataLoader(BaseDataLoader):
                 'cohort_types': list(cohort_data.columns) if hasattr(cohort_data, 'columns') else []
             }
         else:
-            data['cohort_retention'] = None
-            data['summary'] = {'error': 'Cohort retention data not found'}
+            # Fallback to old revenue file if new file not available
+            cohort_path = self.get_file_path("outputs/segments/cohort/revenue_by_cohort_date.csv")
+            cohort_data = self.load_file(cohort_path, 'csv')
+            
+            if cohort_data is not None:
+                data['cohort_retention'] = cohort_data
+                data['summary'] = {
+                    'total_cohorts': len(cohort_data),
+                    'cohort_types': list(cohort_data.columns) if hasattr(cohort_data, 'columns') else []
+                }
+            else:
+                data['cohort_retention'] = None
+                data['summary'] = {'error': 'Cohort retention data not found'}
         
         self.data = data
         return data
