@@ -41,6 +41,8 @@ except ImportError:
     validate_environment_safety = None
     BigQuerySafetyError = Exception
 
+# On startup, load field_mapping.json from env or fallback path. Use its fields to override any hardcoded or env sourced column names for all logic.
+
 def get_bigquery_client():
     """Initialize BigQuery client with credentials and safety guards"""
     # Validate environment safety first
@@ -64,12 +66,13 @@ def get_bigquery_client():
 def build_where_clause(app_filter, date_start, date_end):
     """Build WHERE clause for SQL queries"""
     conditions = []
+    timestamp_column = os.environ.get('TIMESTAMP_COLUMN', 'adjusted_timestamp')
     
     if app_filter and app_filter.strip() and app_filter != 'ALL_APPS':
         conditions.append(f"app_longname = '{app_filter}'")
     
     if date_start and date_end and date_start.strip() and date_end.strip() and date_start != 'ALL_DATES' and date_end != 'ALL_DATES':
-        conditions.append(f"DATE(adjusted_timestamp) BETWEEN '{date_start}' AND '{date_end}'")
+        conditions.append(f"DATE({timestamp_column}) BETWEEN '{date_start}' AND '{date_end}'")
     
     return "WHERE " + " AND ".join(conditions) if conditions else ""
 
@@ -141,12 +144,13 @@ def sample_data(client, dataset_name, app_filter, date_start, date_end, limit=10
     print("📊 Sampling data from dataset...")
     
     where_clause = build_where_clause(app_filter, date_start, date_end)
+    timestamp_column = os.environ.get('TIMESTAMP_COLUMN', 'adjusted_timestamp')
     
     query = f"""
     SELECT *
     FROM `{dataset_name}`
     {where_clause}
-    ORDER BY adjusted_timestamp DESC
+    ORDER BY {timestamp_column} DESC
     LIMIT {limit}
     """
     
@@ -166,7 +170,10 @@ def analyze_events(df):
         return {}
     
     # Get unique events
-    unique_events = df['name'].value_counts().to_dict()
+    event_name_col = os.environ.get('EVENT_NAME_COLUMN', 'name')
+    if event_name_col not in df.columns:
+        return {}
+    unique_events = df[event_name_col].value_counts().to_dict()
     
     print(f"✅ Found {len(unique_events)} unique events")
     return unique_events
@@ -181,7 +188,7 @@ def identify_user_columns(df):
     user_columns = {}
     
     # Check for common user ID columns
-    potential_user_cols = ['custom_user_id', 'user_id', 'device_id', 'gaid', 'idfa']
+    potential_user_cols = ['appsflyer_id', 'user_id', 'device_id', 'gaid', 'idfa', 'customer_user_id']
     
     for col in potential_user_cols:
         if col in df.columns:
@@ -217,7 +224,7 @@ def analyze_revenue_columns(df):
     revenue_columns = {}
     
     # Check for revenue-related columns
-    potential_revenue_cols = ['converted_revenue', 'revenue', 'received_revenue', 'converted_currency', 'is_revenue_valid', 'received_revenue_event']
+    potential_revenue_cols = ['event_revenue_usd', 'event_revenue', 'revenue', 'received_revenue', 'converted_currency', 'is_revenue_valid', 'received_revenue_event']
     
     for col in potential_revenue_cols:
         if col in df.columns:
@@ -329,8 +336,9 @@ def create_schema_mapping(schema, events, user_columns, revenue_columns, session
     primary_user_id = None
     user_id_issues = []
     
+    # Use appsflyer_id as the primary identifier
     for col, metrics in user_columns.items():
-        if metrics.get('recommended_for_aggregation', False):
+        if col == 'appsflyer_id' and metrics.get('non_null_count', 0) > 0:
             primary_user_id = col
             break
     
@@ -338,10 +346,15 @@ def create_schema_mapping(schema, events, user_columns, revenue_columns, session
         # Fallback to device_id if available
         if 'device_id' in user_columns:
             primary_user_id = 'device_id'
-            user_id_issues.append("Using device_id as primary user identifier due to custom_user_id data quality issues")
+            user_id_issues.append("Using device_id as primary user identifier due to appsflyer_id data quality issues")
         else:
             user_id_issues.append("No suitable user identifier found")
     
+    # Override primary user id if provided via env
+    env_user_id = os.environ.get('USER_ID_COLUMN', '').strip()
+    if env_user_id:
+        primary_user_id = env_user_id
+
     schema_mapping = {
         "run_hash": run_hash,
         "timestamp": datetime.now().isoformat(),
@@ -368,8 +381,8 @@ def create_schema_mapping(schema, events, user_columns, revenue_columns, session
         },
         "recommendations": {
             "primary_user_id": primary_user_id,
-            "primary_revenue_column": "converted_revenue" if "converted_revenue" in revenue_columns else "revenue",
-            "timestamp_column": "adjusted_timestamp",
+            "primary_revenue_column": os.environ.get('REVENUE_COLUMN', 'converted_revenue') if os.environ.get('REVENUE_COLUMN') else ("converted_revenue" if "converted_revenue" in revenue_columns else "revenue"),
+            "timestamp_column": os.environ.get('TIMESTAMP_COLUMN', 'adjusted_timestamp'),
             "session_duration_calculation": session_analysis.get('duration_calculation_strategy', {}),
             "user_id_issues": user_id_issues
         }

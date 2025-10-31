@@ -49,7 +49,7 @@ Please provide a comprehensive analysis of the user segmentation data.
 1. **Analyze User Segments**: Identify patterns and behaviors within user segments
 2. **Provide Insights**: Generate actionable insights based on segmentation data
 3. **Assess Segmentation**: Evaluate the effectiveness of current segmentation
-4. **Identify Opportunities**: Highlight areas for segmentation improvement
+4. **Identify Opportunities**: Highlight which segments perform well consistently and what improvements can be made to them
 
 **Output Format:**
 Provide your analysis in the following JSON structure:
@@ -93,9 +93,11 @@ Provide your analysis in the following JSON structure:
 **Key Requirements:**
 - Focus on actionable insights with specific, measurable recommendations
 - AVOID generic recommendations like "add new features" or "improve existing ones"
-- Provide specific evidence (data points, percentages, metrics) to support every finding
+- Keep language of output simple and avoid jargon
+- Provide atleast 2 data points as evidence to support every finding
 - Include concrete numbers, dates, and measurable outcomes
 - Assess data quality with specific examples
 - Include confidence levels in metadata
 - Highlight any data limitations or concerns
-- Make recommendations specific to the actual data patterns observed"""
+- Make recommendations specific to the actual data patterns observed
+- Make recommendations while ignoring the first 7 days of data"""

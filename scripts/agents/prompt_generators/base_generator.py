@@ -44,10 +44,9 @@ class BasePromptGenerator(ABC):
         return """
 Please analyze the provided data and generate insights. Focus on:
 1. Key trends and patterns
-2. Significant changes or anomalies
-3. Actionable recommendations
+2. Significant changes or anomalies with evidence
+3. Actionable recommendations in simple language with no jargon 
 4. Data quality observations
-5. Business impact assessment
 
 Provide your analysis in a structured JSON format as specified in the system prompt.
 """

@@ -272,8 +272,9 @@ def calculate_user_journey(df: pd.DataFrame) -> pd.DataFrame:
     level_columns = [col for col in df.columns if col.startswith('level_') and col.endswith('_time')]
     
     # Group by user to analyze their complete journey across all dates
+    has_device = 'device_id' in df.columns
     for user_id, user_df in df.groupby('user_id'):
-        device_id = user_df['device_id'].iloc[0]
+        device_id = user_df['device_id'].iloc[0] if has_device else None
         cohort_date = user_df['cohort_date'].iloc[0]
         
         # Track all stages this user has completed across all dates
@@ -302,14 +303,16 @@ def calculate_user_journey(df: pd.DataFrame) -> pd.DataFrame:
                     completed_stages['first_purchase'] = purchase_time
         
         # Add ftue_start for all users (they all start the journey)
-        journey_stages.append({
+        base_entry = {
             'user_id': user_id,
-            'device_id': device_id,
             'journey_stage': 'ftue_start',
             'stage_completion_date': None,
             'time_to_stage_days': 0,
             'stage_confidence': 0.9
-        })
+        }
+        if has_device:
+            base_entry['device_id'] = device_id
+        journey_stages.append(base_entry)
         
         # Add all completed stages for this user
         for stage, completion_date in completed_stages.items():
@@ -323,14 +326,16 @@ def calculate_user_journey(df: pd.DataFrame) -> pd.DataFrame:
                 except:
                     time_to_stage = 0
             
-            journey_stages.append({
+            stage_entry = {
                 'user_id': user_id,
-                'device_id': device_id,
                 'journey_stage': stage,
                 'stage_completion_date': completion_date,
                 'time_to_stage_days': time_to_stage,
                 'stage_confidence': 0.9
-            })
+            }
+            if has_device:
+                stage_entry['device_id'] = device_id
+            journey_stages.append(stage_entry)
     
     return pd.DataFrame(journey_stages)
 
@@ -611,14 +616,18 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
     print("👤 Creating user level files...")
     
     # Revenue segments daily (user-daily level)
-    revenue_segments_daily = df[['date', 'user_id', 'device_id', 'cohort_date', 'revenue_segment', 
-                                'total_revenue', 'iap_revenue', 'ad_revenue', 'revenue_percentile']].copy()
+    rev_cols = ['date', 'user_id', 'cohort_date', 'revenue_segment', 'total_revenue', 'iap_revenue', 'ad_revenue', 'revenue_percentile']
+    if 'device_id' in df.columns:
+        rev_cols.insert(2, 'device_id')
+    revenue_segments_daily = df[[c for c in rev_cols if c in df.columns]].copy()
     revenue_segments_daily.to_csv(user_level_dir / "revenue_segments_daily.csv", index=False)
     
     # User journey cohort (cohort date level only)
     journey_cohort = journey_df.merge(df[['user_id', 'cohort_date']].drop_duplicates(), on='user_id', how='left')
-    journey_cohort = journey_cohort[['cohort_date', 'user_id', 'device_id', 'journey_stage', 
-                                   'stage_completion_date', 'time_to_stage_days', 'stage_confidence']]
+    jc_cols = ['cohort_date', 'user_id', 'journey_stage', 'stage_completion_date', 'time_to_stage_days', 'stage_confidence']
+    if 'device_id' in df.columns:
+        jc_cols.insert(2, 'device_id')
+    journey_cohort = journey_cohort[[c for c in jc_cols if c in journey_cohort.columns]]
     journey_cohort.to_csv(user_level_dir / "user_journey_cohort.csv", index=False)
     
     # 4. METADATA FILES

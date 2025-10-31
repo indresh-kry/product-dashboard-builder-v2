@@ -36,9 +36,8 @@ class DailyMetricsPromptGenerator(BasePromptGenerator):
 **Specific Focus Areas:**
 1. Daily trend analysis
 2. Metric correlation patterns
-3. Seasonal variations
-4. Performance benchmarks
-5. Anomaly detection
+3. Performance benchmarks
+4. Anomaly detection
 
 Please provide a comprehensive analysis of the daily metrics data.
 """
@@ -95,9 +94,11 @@ Provide your analysis in the following JSON structure:
 **Key Requirements:**
 - Focus on actionable insights with specific, measurable recommendations
 - AVOID generic recommendations like "add new features" or "improve existing ones"
-- Provide specific evidence (data points, percentages, metrics) to support every finding
+- Keep language of output simple and avoid jargon
+- Provide atleast 2 data points as evidence to support every finding
 - Include concrete numbers, dates, and measurable outcomes
 - Assess data quality with specific examples
 - Include confidence levels in metadata
 - Highlight any data limitations or concerns
-- Make recommendations specific to the actual data patterns observed"""
+- Make recommendations specific to the actual data patterns observed
+- Make recommendations while ignoring the first 7 days of data"""

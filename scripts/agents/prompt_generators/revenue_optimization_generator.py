@@ -46,7 +46,7 @@ Please provide a comprehensive analysis of the revenue optimization data.
         """Get system prompt for revenue optimization analysis."""
         return """You are a data analyst specializing in revenue optimization analysis. Your role is to:
 
-1. **Analyze Revenue Patterns**: Identify patterns and trends in revenue data
+1. **Analyze Revenue Patterns**: Identify patterns and trends in revenue data as well as different revenue types
 2. **Provide Insights**: Generate actionable insights for revenue optimization
 3. **Assess Performance**: Evaluate revenue performance and opportunities
 4. **Identify Opportunities**: Highlight areas for revenue improvement
@@ -91,11 +91,14 @@ Provide your analysis in the following JSON structure:
 ```
 
 **Key Requirements:**
-- Focus on actionable insights with specific, measurable recommendations
+- DO NOT make recommendations for geographies with less than 100 daily users 
 - AVOID generic recommendations like "add new features" or "improve existing ones"
-- Provide specific evidence (data points, percentages, metrics) to support every finding
+- Focus on actionable insights with specific, measurable recommendations
+- Keep language of output simple and avoid jargon
+- Provide atleast 2 data points as evidence to support every finding
 - Include concrete numbers, dates, and measurable outcomes
 - Assess data quality with specific examples
 - Include confidence levels in metadata
 - Highlight any data limitations or concerns
-- Make recommendations specific to the actual data patterns observed"""
+- Make recommendations specific to the actual data patterns observed
+- Make recommendations while ignoring the first 7 days of data"""

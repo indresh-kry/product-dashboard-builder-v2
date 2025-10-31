@@ -1,0 +1,14 @@
+{
+  "user_id_column": "appsflyer_id",
+  "event_name_column": "event_name",
+  "timestamp_column": "event_time",
+  "revenue_column": "event_revenue_usd",
+  "country_column": "country_code",
+  "attribution_fields": ["media_source", "channel", "partner"],
+  "session_id_column": null,
+  "revenue_type_identifiers": {
+    "iap_event_names": ["af_purchase"],
+    "ad_event_names": ["af_ad_revenue"]
+  }
+}
+

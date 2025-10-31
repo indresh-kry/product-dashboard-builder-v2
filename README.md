@@ -115,7 +115,7 @@ The system follows a 6-phase workflow:
 
 ### Required Packages
 ```bash
-pip install google-cloud-bigquery google-oauth2 pandas python-dotenv
+pip install google-cloud-bigquery google-oauth2 pandas python-dotenv scipy openai==1.30.0
 ```
 
 ### Environment Variables
@@ -123,6 +123,7 @@ pip install google-cloud-bigquery google-oauth2 pandas python-dotenv
 - `GOOGLE_CLOUD_PROJECT`: Google Cloud project ID
 - `GOOGLE_APPLICATION_CREDENTIALS`: Path to service account credentials
 - `RUN_HASH`: Unique identifier for analysis runs
+ - `OPENAI_API_KEY`: OpenAI key (optional; also read from creds.json)
 
 ## 📁 Project Structure
 

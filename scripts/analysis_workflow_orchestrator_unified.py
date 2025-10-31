@@ -318,6 +318,10 @@ export AGGREGATION_LIMIT='{args.aggregation_limit}'
                 'aggregation_limit': args.aggregation_limit
             }
             
+            # Allow agentic analysis only during this phase
+            os.environ['ORCHESTRATOR_PHASE'] = '5'
+            os.environ['ALLOW_AGENTIC_NOW'] = '1'
+
             print(f"🤖 Running Agentic Insights Generation")
             print(f"📱 App Filter: {args.app_filter}")
             print(f"📅 Date Range: {args.date_start} to {args.date_end}")
@@ -454,20 +458,120 @@ Examples:
     parser.add_argument('--raw-data-limit', type=int, default=100, help='Raw data limit (default: 100)')
     parser.add_argument('--aggregation-limit', type=int, default=100000, help='Aggregation limit (default: 100000)')
     parser.add_argument('--mode', default='full', choices=['full', 'quick', 'schema-only', 'aggregation-only'], help='Analysis mode (default: full)')
+    parser.add_argument('--field-mapping-json', default='field_mapping.json', help='Path to field mapping JSON config')
     
     # Dataset configuration
     parser.add_argument('--dataset-name', default='gc-prod-459709.nbs_dataset.singular_user_level_event_data', help='BigQuery dataset name')
     parser.add_argument('--event-name-column', default='name', help='Event name column')
-    parser.add_argument('--user-id-column', default='custom_user_id', help='User ID column')
+    parser.add_argument('--user-id-column', default='appsflyer_id', help='User ID column')
     parser.add_argument('--device-id-column', default='device_id', help='Device ID column')
-    parser.add_argument('--timestamp-column', default='adjusted_timestamp', help='Timestamp column')
-    parser.add_argument('--revenue-column', default='converted_revenue', help='Revenue column')
+    parser.add_argument('--timestamp-column', default='event_time', help='Timestamp column')
+    parser.add_argument('--revenue-column', default='event_revenue_usd', help='Revenue column')
     parser.add_argument('--revenue-validation-column', default='is_revenue_event', help='Revenue validation column')
     parser.add_argument('--install-events', default='install,first_launch,af_first_launch', help='Install events')
     parser.add_argument('--analysis-window-days', type=int, default=90, help='Analysis window in days')
     
     args = parser.parse_args()
     
+    # Load field mapping JSON if provided
+    if args.field_mapping_json:
+        try:
+            with open(args.field_mapping_json, 'r') as f:
+                field_mapping = json.load(f)
+                print(f"📄 Loaded field mapping from: {args.field_mapping_json}")
+                print(f"📊 Field Mapping: {field_mapping}")
+                
+                # Override environment variables if they exist in the JSON
+                if 'event_name_column' in field_mapping:
+                    os.environ['EVENT_NAME_COLUMN'] = field_mapping['event_name_column']
+                    print(f"📝 Overriding EVENT_NAME_COLUMN to: {field_mapping['event_name_column']}")
+                    args.event_name_column = field_mapping['event_name_column']
+                if 'user_id_column' in field_mapping:
+                    os.environ['USER_ID_COLUMN'] = field_mapping['user_id_column']
+                    print(f"📝 Overriding USER_ID_COLUMN to: {field_mapping['user_id_column']}")
+                    args.user_id_column = field_mapping['user_id_column']
+                if 'revenue_column' in field_mapping:
+                    os.environ['REVENUE_COLUMN'] = field_mapping['revenue_column']
+                    print(f"📝 Overriding REVENUE_COLUMN to: {field_mapping['revenue_column']}")
+                    args.revenue_column = field_mapping['revenue_column']
+                if 'revenue_validation_column' in field_mapping:
+                    os.environ['REVENUE_VALIDATION_COLUMN'] = field_mapping['revenue_validation_column']
+                    print(f"📝 Overriding REVENUE_VALIDATION_COLUMN to: {field_mapping['revenue_validation_column']}")
+                if 'device_id_column' in field_mapping:
+                    os.environ['DEVICE_ID_COLUMN'] = field_mapping['device_id_column']
+                    print(f"📝 Overriding DEVICE_ID_COLUMN to: {field_mapping['device_id_column']}")
+                if 'timestamp_column' in field_mapping:
+                    os.environ['TIMESTAMP_COLUMN'] = field_mapping['timestamp_column']
+                    print(f"📝 Overriding TIMESTAMP_COLUMN to: {field_mapping['timestamp_column']}")
+                    args.timestamp_column = field_mapping['timestamp_column']
+                if 'install_events' in field_mapping:
+                    os.environ['INSTALL_EVENTS'] = field_mapping['install_events']
+                    print(f"📝 Overriding INSTALL_EVENTS to: {field_mapping['install_events']}")
+                if 'analysis_window_days' in field_mapping:
+                    os.environ['ANALYSIS_WINDOW_DAYS'] = str(field_mapping['analysis_window_days'])
+                    print(f"📝 Overriding ANALYSIS_WINDOW_DAYS to: {field_mapping['analysis_window_days']}")
+                if 'dataset_name' in field_mapping:
+                    os.environ['DATASET_NAME'] = field_mapping['dataset_name']
+                    print(f"📝 Overriding DATASET_NAME to: {field_mapping['dataset_name']}")
+                    args.dataset_name = field_mapping['dataset_name']
+                if 'app_filter' in field_mapping:
+                    os.environ['APP_FILTER'] = field_mapping['app_filter']
+                    print(f"📝 Overriding APP_FILTER to: {field_mapping['app_filter']}")
+                    args.app_filter = field_mapping['app_filter']
+                if 'date_start' in field_mapping:
+                    os.environ['DATE_START'] = field_mapping['date_start']
+                    print(f"📝 Overriding DATE_START to: {field_mapping['date_start']}")
+                    args.date_start = field_mapping['date_start']
+                if 'date_end' in field_mapping:
+                    os.environ['DATE_END'] = field_mapping['date_end']
+                    print(f"📝 Overriding DATE_END to: {field_mapping['date_end']}")
+                    args.date_end = field_mapping['date_end']
+                if 'raw_data_limit' in field_mapping:
+                    os.environ['RAW_DATA_LIMIT'] = str(field_mapping['raw_data_limit'])
+                    print(f"📝 Overriding RAW_DATA_LIMIT to: {field_mapping['raw_data_limit']}")
+                    args.raw_data_limit = int(field_mapping['raw_data_limit'])
+                if 'aggregation_limit' in field_mapping:
+                    os.environ['AGGREGATION_LIMIT'] = str(field_mapping['aggregation_limit'])
+                    print(f"📝 Overriding AGGREGATION_LIMIT to: {field_mapping['aggregation_limit']}")
+                    args.aggregation_limit = int(field_mapping['aggregation_limit'])
+                if 'mode' in field_mapping:
+                    os.environ['MODE'] = field_mapping['mode']
+                    print(f"📝 Overriding MODE to: {field_mapping['mode']}")
+                    args.mode = field_mapping['mode']
+                if 'confidence_threshold' in field_mapping:
+                    os.environ['CONFIDENCE_THRESHOLD'] = str(field_mapping['confidence_threshold'])
+                    print(f"📝 Overriding CONFIDENCE_THRESHOLD to: {field_mapping['confidence_threshold']}")
+                if 'minimum_sample_size' in field_mapping:
+                    os.environ['MINIMUM_SAMPLE_SIZE'] = str(field_mapping['minimum_sample_size'])
+                    print(f"📝 Overriding MINIMUM_SAMPLE_SIZE to: {field_mapping['minimum_sample_size']}")
+                if 'statistical_significance' in field_mapping:
+                    os.environ['STATISTICAL_SIGNIFICANCE'] = str(field_mapping['statistical_significance'])
+                    print(f"📝 Overriding STATISTICAL_SIGNIFICANCE to: {field_mapping['statistical_significance']}")
+                if 'max_query_cost' in field_mapping:
+                    os.environ['MAX_QUERY_COST'] = str(field_mapping['max_query_cost'])
+                    print(f"📝 Overriding MAX_QUERY_COST to: {field_mapping['max_query_cost']}")
+                if 'parallel_queries' in field_mapping:
+                    os.environ['PARALLEL_QUERIES'] = str(field_mapping['parallel_queries'])
+                    print(f"📝 Overriding PARALLEL_QUERIES to: {field_mapping['parallel_queries']}")
+                if 'retry_attempts' in field_mapping:
+                    os.environ['RETRY_ATTEMPTS'] = str(field_mapping['retry_attempts'])
+                    print(f"📝 Overriding RETRY_ATTEMPTS to: {field_mapping['retry_attempts']}")
+                if 'timeout_seconds' in field_mapping:
+                    os.environ['TIMEOUT_SECONDS'] = str(field_mapping['timeout_seconds'])
+                    print(f"📝 Overriding TIMEOUT_SECONDS to: {field_mapping['timeout_seconds']}")
+
+        except FileNotFoundError:
+            print(f"❌ Error: Field mapping JSON file not found at {args.field_mapping_json}")
+            print(f"📝 Please ensure the file exists and is accessible.")
+            sys.exit(1)
+        except json.JSONDecodeError:
+            print(f"❌ Error: Field mapping JSON file is not valid JSON at {args.field_mapping_json}")
+            print(f"📝 Please check the file content.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"❌ Error loading field mapping JSON: {str(e)}")
+            sys.exit(1)
+
     # Create and run orchestrator
     orchestrator = UnifiedAnalysisWorkflowOrchestrator()
     success = orchestrator.run_complete_workflow(args)

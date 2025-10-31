@@ -28,6 +28,17 @@ class AgenticCoordinator:
         
     def run_analysis(self, run_hash: str, run_metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Run analysis with all enabled agents."""
+        # Guard: only allow when orchestrator explicitly enables Phase 5
+        if os.environ.get('ALLOW_AGENTIC_NOW') != '1' and os.environ.get('ORCHESTRATOR_PHASE') != '5':
+            return {
+                'run_hash': run_hash,
+                'timestamp': datetime.now().isoformat(),
+                'agents_processed': [],
+                'agent_results': {},
+                'summary': {'total_agents': 0, 'successful_agents': 0, 'failed_agents': 0, 'errors': 0},
+                'errors': ['Agentic analysis skipped: not in orchestrator Phase 5']
+            }
+
         print(f"🚀 Starting agentic analysis for run: {run_hash}", file=sys.stderr)
         
         # Get enabled agents
