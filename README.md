@@ -115,8 +115,19 @@ The system follows a 6-phase workflow:
 
 ### Required Packages
 ```bash
-pip install google-cloud-bigquery google-oauth2 pandas python-dotenv scipy openai==1.30.0
+pip install google-cloud-bigquery google-oauth2 pandas python-dotenv scipy openai==1.30.0 db-dtypes matplotlib seaborn
 ```
+
+**Package Details:**
+- **google-cloud-bigquery**: BigQuery client for data extraction
+- **google-oauth2**: Authentication for Google Cloud services
+- **pandas**: Data manipulation and analysis
+- **python-dotenv**: Environment variable management
+- **scipy**: Statistical analysis (used in user segmentation)
+- **openai==1.30.0**: OpenAI API client for LLM insights generation (pinned to 1.30.0 for compatibility)
+- **db-dtypes**: Required for BigQuery `to_dataframe()` method to handle BigQuery data types
+- **matplotlib**: Chart and visualization generation
+- **seaborn**: Statistical data visualization (used for enhanced chart styling)
 
 ### Environment Variables
 - `DATASET_NAME`: BigQuery dataset name
