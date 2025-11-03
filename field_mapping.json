@@ -9,6 +9,24 @@
   "revenue_type_identifiers": {
     "iap_event_names": ["af_purchase"],
     "ad_event_names": ["af_ad_revenue"]
+  },
+  "key_events": {
+    "ftue_completion_events": [
+      "ftue_complete",
+      "af_tutorial_completion"
+    ],
+    "level_1_completion_events": [
+      "car_bought"
+    ],
+    "other_level_completion_events": {
+      "pattern": "complete_bossladder_level{level}",
+      "required_levels": [2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "description": "Level completion events following the pattern complete_bossladder_level{N} where N is the level number (levels 2-10)"
+    },
+    "other_milestone_events": {
+      "first_purchase": "af_purchase",
+      "first_login": "af_login"
+    }
   }
 }
 

@@ -20,7 +20,7 @@ Environment Variables:
 - MODERATE_ENGAGEMENT_PERCENTILE: Percentile threshold for moderate engagement (default: 0.3)
 - WHALE_REVENUE_PERCENTILE: Percentile threshold for whale users (default: 0.95)
 - DOLPHIN_REVENUE_PERCENTILE: Percentile threshold for dolphin users (default: 0.8)
-- CHURN_DAYS_THRESHOLD: Days threshold for churn classification (default: 14)
+- CHURN_DAYS_THRESHOLD: Days threshold for churn classification (default: 7)
 
 Dependencies:
 - pandas: Data manipulation and analysis
@@ -172,7 +172,7 @@ def calculate_behavioral_segments(df: pd.DataFrame) -> pd.DataFrame:
     # Define thresholds based on data distribution
     high_threshold = df['engagement_score'].quantile(float(os.environ.get('HIGH_ENGAGEMENT_PERCENTILE', 0.7)))
     moderate_threshold = df['engagement_score'].quantile(float(os.environ.get('MODERATE_ENGAGEMENT_PERCENTILE', 0.3)))
-    churn_threshold = int(os.environ.get('CHURN_DAYS_THRESHOLD', 14))
+    churn_threshold = int(os.environ.get('CHURN_DAYS_THRESHOLD', 7))
     
     def assign_behavioral_segment(row):
         # Use days_since_first_event as proxy for churn (higher = older users, potentially churned)
@@ -545,6 +545,29 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
     engagement_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
     engagement_by_cohort_df.to_csv(cohort_dir / "engagement_by_cohort_date.csv", index=False)
     
+    # Retention by cohort date (D1, D3, D7, D14, D30)
+    retention_by_cohort = {}
+    for cohort_date, cohort_df in df.groupby('cohort_date'):
+        cohort_size = cohort_df['user_id'].nunique()
+        retention_by_cohort[cohort_date] = {'cohort_size': cohort_size}
+        
+        # Calculate retention for different days
+        for day in [1, 3, 7, 14, 30]:
+            # Users who were active on day N (days_since_first_event == day)
+            active_users = cohort_df[cohort_df['days_since_first_event'] == day]['user_id'].nunique()
+            retention_rate = (active_users / cohort_size * 100) if cohort_size > 0 else 0.0
+            retention_by_cohort[cohort_date][f'day_{day}_retained_users'] = active_users
+            retention_by_cohort[cohort_date][f'day_{day}_retention_rate'] = round(retention_rate, 2)
+        
+        # Day 0 retention (install day)
+        day_0_users = cohort_df[cohort_df['days_since_first_event'] == 0]['user_id'].nunique()
+        retention_by_cohort[cohort_date]['day_0_retained_users'] = day_0_users
+        retention_by_cohort[cohort_date]['day_0_retention_rate'] = 100.0  # Day 0 is always 100%
+    
+    retention_by_cohort_df = pd.DataFrame.from_dict(retention_by_cohort, orient='index').reset_index()
+    retention_by_cohort_df.rename(columns={'index': 'cohort_date'}, inplace=True)
+    retention_by_cohort_df.to_csv(cohort_dir / "retention_by_cohort_date.csv", index=False)
+    
     # Funnel by cohort date
     journey_df = calculate_user_journey(df)
     funnel_by_cohort = {}
@@ -622,6 +645,14 @@ def save_segment_outputs(df: pd.DataFrame, run_hash: str, segment_definitions: D
     revenue_segments_daily = df[[c for c in rev_cols if c in df.columns]].copy()
     revenue_segments_daily.to_csv(user_level_dir / "revenue_segments_daily.csv", index=False)
     
+    # Behavioral segments daily (user-daily level)
+    if 'behavioral_segment' in df.columns:
+        behavioral_cols = ['date', 'user_id', 'cohort_date', 'behavioral_segment', 'engagement_score', 'days_since_last_active']
+        if 'device_id' in df.columns:
+            behavioral_cols.insert(2, 'device_id')
+        behavioral_segments_daily = df[[c for c in behavioral_cols if c in df.columns]].copy()
+        behavioral_segments_daily.to_csv(user_level_dir / "behavioral_segments_daily.csv", index=False)
+    
     # User journey cohort (cohort date level only)
     journey_cohort = journey_df.merge(df[['user_id', 'cohort_date']].drop_duplicates(), on='user_id', how='left')
     jc_cols = ['cohort_date', 'user_id', 'journey_stage', 'stage_completion_date', 'time_to_stage_days', 'stage_confidence']
@@ -698,7 +729,7 @@ def main():
                     "criteria": {
                         "high_engagement": {
                             "engagement_score": f">= {df['engagement_score'].quantile(0.7):.2f}",
-                            "churn_threshold": f"< {os.environ.get('CHURN_DAYS_THRESHOLD', 14)} days"
+                            "churn_threshold": f"< {os.environ.get('CHURN_DAYS_THRESHOLD', 7)} days"
                         },
                         "moderate_engagement": {
                             "engagement_score": f"{df['engagement_score'].quantile(0.3):.2f} - {df['engagement_score'].quantile(0.7):.2f}"
@@ -707,7 +738,7 @@ def main():
                             "engagement_score": f"< {df['engagement_score'].quantile(0.3):.2f}"
                         },
                         "churned": {
-                            "days_since_last_active": f">= {os.environ.get('CHURN_DAYS_THRESHOLD', 14)} days"
+                            "days_since_last_active": f">= {os.environ.get('CHURN_DAYS_THRESHOLD', 7)} days"
                         }
                     }
                 },

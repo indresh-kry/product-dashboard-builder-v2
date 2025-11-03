@@ -99,7 +99,7 @@ class AgentRegistry:
                 }
             },
             "llm": {
-                "model": "gpt-4",
+                "model": "gpt-4-turbo",
                 "temperature": 0.3,
                 "max_tokens": 1000
             }

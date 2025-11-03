@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
 Data Quality Prompt Generator
-Version: 2.0.0
-Last Updated: 2025-10-23
+Version: 2.1.0
+Last Updated: 2025-10-31
 
 Prompt generator for data quality analysis.
+Sends entire filtered dataset to LLM (not just first 5 rows).
 """
 
+import json
+import pandas as pd
 from typing import Dict, Any
 from .base_generator import BasePromptGenerator
 
@@ -15,6 +18,35 @@ class DataQualityPromptGenerator(BasePromptGenerator):
     
     def __init__(self):
         super().__init__("data_quality")
+    
+    def format_data_for_prompt(self, data: Dict[str, Any]) -> str:
+        """Format data for inclusion in prompts - sends ENTIRE dataset for data quality data."""
+        if not data:
+            return "No data available for analysis."
+        
+        formatted_sections = []
+        
+        for key, value in data.items():
+            if key == 'summary':
+                continue
+                
+            if isinstance(value, pd.DataFrame):
+                # For data quality data, send the ENTIRE dataset (not just head())
+                if len(value) > 0:
+                    formatted_sections.append(
+                        f"**{key.replace('_', ' ').title()}:**\n"
+                        f"Total rows: {len(value)}\n"
+                        f"Columns: {', '.join(value.columns)}\n"
+                        f"\n{value.to_string(index=False)}"
+                    )
+                else:
+                    formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\nNo data available.")
+            elif isinstance(value, dict):
+                formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\n{json.dumps(value, indent=2)}")
+            else:
+                formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\n{str(value)}")
+        
+        return "\n\n".join(formatted_sections)
     
     def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any]) -> str:
         """Generate prompt for data quality analysis."""
@@ -99,5 +131,4 @@ Provide your analysis in the following JSON structure:
 - Assess data quality with specific examples
 - Include confidence levels in metadata
 - Highlight any data limitations or concerns
-- Make recommendations specific to the actual data patterns observed
-- Make recommendations while ignoring the first 7 days of data"""
+- Make recommendations specific to the actual data patterns observed"""

@@ -28,7 +28,7 @@ except ImportError:
 class LLMClient:
     """Unified client for LLM API calls."""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4", proxies: Optional[Dict[str, str]] = None):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4-turbo", proxies: Optional[Dict[str, str]] = None):
         print(f"🔑 Initializing LLM Client...", file=sys.stderr)
         self.api_key = api_key or self._get_api_key()
         self.model = model

@@ -1,10 +1,19 @@
 """
 Report Visualization Generator
-Version: 1.0.0
-Last Updated: 2025-10-24
+Version: 1.2.0
+Last Updated: 2025-10-31
 
 This module generates visualizations for the agentic insights reports.
-Creates charts for DAU trends, revenue trends, retention funnels, and event funnels.
+Creates charts for DAU trends, revenue trends, retention funnels, event funnels, and ARPU performance.
+
+Changelog:
+- v1.2.0 (2025-10-31): Added new visualizations:
+    - Daily user count by acquisition channel in User Engagement Trends
+    - Daily revenue by acquisition channel and geography in Revenue Performance
+    - New ARPU Performance section with overall ARPU and ARPU by acquisition channel
+- v1.1.0 (2025-10-31): Added date filtering logic to exclude incomplete dates from all visualizations
+    - Finds the last date present across all 4 data sources (DAU, Revenue, Aggregated)
+    - Filters all visualizations to exclude dates after the last complete date
 """
 
 import os
@@ -31,21 +40,97 @@ class ReportVisualizationGenerator:
         # Create visualization directory
         os.makedirs(self.output_dir, exist_ok=True)
         
+    def find_last_complete_date(self) -> Optional[str]:
+        """Find the last date that has entries across all 4 visualization data sources.
+        
+        Returns:
+            Last complete date (YYYY-MM-DD format) or None if data sources don't exist
+        """
+        try:
+            date_sets = []
+            
+            # 1. DAU data dates
+            dau_file = f"{self.data_dir}/segments/daily/dau_by_date.csv"
+            if os.path.exists(dau_file):
+                dau_df = pd.read_csv(dau_file)
+                if 'date' in dau_df.columns:
+                    dau_df['date'] = pd.to_datetime(dau_df['date'])
+                    date_sets.append(set(dau_df['date'].dt.date.unique()))
+                else:
+                    return None
+            else:
+                return None
+            
+            # 2. Revenue data dates
+            revenue_file = f"{self.data_dir}/segments/daily/revenue_by_date.csv"
+            if os.path.exists(revenue_file):
+                revenue_df = pd.read_csv(revenue_file)
+                if 'date' in revenue_df.columns:
+                    revenue_df['date'] = pd.to_datetime(revenue_df['date'])
+                    date_sets.append(set(revenue_df['date'].dt.date.unique()))
+                else:
+                    return None
+            else:
+                return None
+            
+            # 3. Aggregated data dates (for retention and event funnels)
+            agg_file = f"{self.data_dir}/aggregations/aggregated_data.csv"
+            if os.path.exists(agg_file):
+                agg_df = pd.read_csv(agg_file)
+                if 'date' in agg_df.columns:
+                    agg_df['date'] = pd.to_datetime(agg_df['date'])
+                    date_sets.append(set(agg_df['date'].dt.date.unique()))
+                else:
+                    return None
+            else:
+                return None
+            
+            # Find intersection of all date sets (dates present in all 3 sources)
+            # Note: Retention and Event funnels use the same aggregated_data.csv
+            if len(date_sets) >= 3:
+                common_dates = date_sets[0]
+                for date_set in date_sets[1:]:
+                    common_dates = common_dates.intersection(date_set)
+                
+                if common_dates:
+                    last_complete_date = max(common_dates)
+                    print(f"📅 Last complete date across all visualizations: {last_complete_date}")
+                    return last_complete_date.strftime('%Y-%m-%d')
+            
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ Error finding last complete date: {e}")
+            return None
+    
     def generate_all_charts(self) -> Dict[str, str]:
         """Generate all charts and return file paths."""
         charts = {}
         
         try:
+            # Find last complete date across all data sources
+            last_complete_date = self.find_last_complete_date()
+            
+            if last_complete_date:
+                print(f"📊 Filtering all visualizations to dates up to {last_complete_date}")
+                self.last_complete_date = pd.to_datetime(last_complete_date)
+            else:
+                print("⚠️ Could not determine last complete date, generating charts without date filtering")
+                self.last_complete_date = None
+            
             # 1. DAU Trends
             charts['dau_trend'] = self.create_dau_trend_chart()
             
             # 2. Revenue Trends
             charts['revenue_trend'] = self.create_revenue_trend_chart()
             
-            # 3. Retention Funnels
+            # 3. ARPU Performance
+            charts['arpu_performance'] = self.create_arpu_performance_chart()
+            
+            # 4. Retention Funnels
             charts['retention_funnel'] = self.create_retention_funnel_chart()
             
-            # 4. Event Funnels
+            # 5. Event Funnels
             charts['event_funnel'] = self.create_event_funnel_chart()
             
             print(f"✅ Generated {len(charts)} charts successfully")
@@ -56,7 +141,7 @@ class ReportVisualizationGenerator:
             return {}
     
     def create_dau_trend_chart(self) -> str:
-        """Create DAU trend chart at daily level."""
+        """Create DAU trend chart at daily level with acquisition channel breakdown."""
         try:
             # Load DAU data
             dau_file = f"{self.data_dir}/segments/daily/dau_by_date.csv"
@@ -64,14 +149,28 @@ class ReportVisualizationGenerator:
                 print(f"⚠️ DAU data file not found: {dau_file}")
                 return ""
                 
-            df = pd.read_csv(dau_file)
-            df['date'] = pd.to_datetime(df['date'])
+            df_dau = pd.read_csv(dau_file)
+            df_dau['date'] = pd.to_datetime(df_dau['date'])
             
-            # Create figure
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+            # Filter to last complete date if set
+            if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                df_dau = df_dau[df_dau['date'] <= self.last_complete_date]
+            
+            # Load aggregated data for acquisition channel breakdown
+            agg_file = f"{self.data_dir}/aggregations/aggregated_data.csv"
+            df_agg = None
+            if os.path.exists(agg_file):
+                df_agg = pd.read_csv(agg_file)
+                if 'date' in df_agg.columns:
+                    df_agg['date'] = pd.to_datetime(df_agg['date'])
+                    if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                        df_agg = df_agg[df_agg['date'] <= self.last_complete_date]
+            
+            # Create figure with 3 subplots
+            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 14))
             
             # DAU Trend
-            ax1.plot(df['date'], df['total_dau'], marker='o', linewidth=2, markersize=6)
+            ax1.plot(df_dau['date'], df_dau['total_dau'], marker='o', linewidth=2, markersize=6)
             ax1.set_title('Daily Active Users Trend', fontsize=16, fontweight='bold')
             ax1.set_ylabel('DAU', fontsize=12)
             ax1.grid(True, alpha=0.3)
@@ -80,16 +179,46 @@ class ReportVisualizationGenerator:
             plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45)
             
             # New vs Returning Users
-            ax2.plot(df['date'], df['new_users'], label='New Users', marker='o', linewidth=2)
-            ax2.plot(df['date'], df['returning_users'], label='Returning Users', marker='s', linewidth=2)
+            ax2.plot(df_dau['date'], df_dau['new_users'], label='New Users', marker='o', linewidth=2)
+            ax2.plot(df_dau['date'], df_dau['returning_users'], label='Returning Users', marker='s', linewidth=2)
             ax2.set_title('New vs Returning Users Trend', fontsize=16, fontweight='bold')
             ax2.set_ylabel('Users', fontsize=12)
-            ax2.set_xlabel('Date', fontsize=12)
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
             ax2.xaxis.set_major_locator(mdates.DayLocator(interval=2))
             plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45)
+            
+            # Daily User Count by Acquisition Channel (using media_source from aggregate table)
+            if df_agg is not None and 'media_source' in df_agg.columns:
+                # Calculate daily unique users by media_source
+                daily_users_by_channel = df_agg.groupby(['date', 'media_source'])['user_id'].nunique().reset_index()
+                daily_users_by_channel.columns = ['date', 'media_source', 'user_count']
+                
+                # Get top channels (limit to top 10 to avoid clutter)
+                top_channels = daily_users_by_channel.groupby('media_source')['user_count'].sum().nlargest(10).index.tolist()
+                daily_users_by_channel = daily_users_by_channel[daily_users_by_channel['media_source'].isin(top_channels)]
+                
+                # Pivot for plotting
+                pivot_df = daily_users_by_channel.pivot(index='date', columns='media_source', values='user_count').fillna(0)
+                pivot_df = pivot_df.sort_index()
+                
+                # Plot each channel
+                for channel in pivot_df.columns:
+                    ax3.plot(pivot_df.index, pivot_df[channel], label=channel, marker='o', linewidth=2, markersize=4)
+                
+                ax3.set_title('Daily User Count by Acquisition Channel', fontsize=16, fontweight='bold')
+                ax3.set_ylabel('User Count', fontsize=12)
+                ax3.set_xlabel('Date', fontsize=12)
+                ax3.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+                ax3.grid(True, alpha=0.3)
+                ax3.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+                ax3.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+                plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45)
+            else:
+                ax3.text(0.5, 0.5, 'Acquisition channel data not available', 
+                        ha='center', va='center', transform=ax3.transAxes, fontsize=12)
+                ax3.set_title('Daily User Count by Acquisition Channel', fontsize=16, fontweight='bold')
             
             plt.tight_layout()
             
@@ -103,10 +232,12 @@ class ReportVisualizationGenerator:
             
         except Exception as e:
             print(f"❌ Error creating DAU trend chart: {e}")
+            import traceback
+            traceback.print_exc()
             return ""
     
     def create_revenue_trend_chart(self) -> str:
-        """Create revenue trend chart at daily level."""
+        """Create revenue trend chart at daily level with acquisition channel and geography breakdown."""
         try:
             # Load revenue data
             revenue_file = f"{self.data_dir}/segments/daily/revenue_by_date.csv"
@@ -114,14 +245,28 @@ class ReportVisualizationGenerator:
                 print(f"⚠️ Revenue data file not found: {revenue_file}")
                 return ""
                 
-            df = pd.read_csv(revenue_file)
-            df['date'] = pd.to_datetime(df['date'])
+            df_revenue = pd.read_csv(revenue_file)
+            df_revenue['date'] = pd.to_datetime(df_revenue['date'])
             
-            # Create figure
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+            # Filter to last complete date if set
+            if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                df_revenue = df_revenue[df_revenue['date'] <= self.last_complete_date]
+            
+            # Load aggregated data for channel and geography breakdown
+            agg_file = f"{self.data_dir}/aggregations/aggregated_data.csv"
+            df_agg = None
+            if os.path.exists(agg_file):
+                df_agg = pd.read_csv(agg_file)
+                if 'date' in df_agg.columns:
+                    df_agg['date'] = pd.to_datetime(df_agg['date'])
+                    if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                        df_agg = df_agg[df_agg['date'] <= self.last_complete_date]
+            
+            # Create figure with 4 subplots
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
             
             # Total Revenue Trend
-            ax1.plot(df['date'], df['total_revenue'], marker='o', linewidth=2, markersize=6, color='green')
+            ax1.plot(df_revenue['date'], df_revenue['total_revenue'], marker='o', linewidth=2, markersize=6, color='green')
             ax1.set_title('Daily Revenue Trend', fontsize=16, fontweight='bold')
             ax1.set_ylabel('Revenue ($)', fontsize=12)
             ax1.grid(True, alpha=0.3)
@@ -130,17 +275,76 @@ class ReportVisualizationGenerator:
             plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45)
             
             # Revenue by Type
-            ax2.plot(df['date'], df['iap_revenue'], label='IAP Revenue', marker='o', linewidth=2)
-            ax2.plot(df['date'], df['ad_revenue'], label='Ad Revenue', marker='s', linewidth=2)
-            ax2.plot(df['date'], df['subscription_revenue'], label='Subscription Revenue', marker='^', linewidth=2)
+            ax2.plot(df_revenue['date'], df_revenue['iap_revenue'], label='IAP Revenue', marker='o', linewidth=2)
+            ax2.plot(df_revenue['date'], df_revenue['ad_revenue'], label='Ad Revenue', marker='s', linewidth=2)
+            ax2.plot(df_revenue['date'], df_revenue['subscription_revenue'], label='Subscription Revenue', marker='^', linewidth=2)
             ax2.set_title('Revenue by Type Trend', fontsize=16, fontweight='bold')
             ax2.set_ylabel('Revenue ($)', fontsize=12)
-            ax2.set_xlabel('Date', fontsize=12)
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
             ax2.xaxis.set_major_locator(mdates.DayLocator(interval=2))
             plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45)
+            
+            # Daily Revenue by Acquisition Channel (using media_source from aggregate table)
+            if df_agg is not None and 'media_source' in df_agg.columns and 'total_revenue' in df_agg.columns:
+                # Calculate daily total revenue by media_source
+                daily_revenue_by_channel = df_agg.groupby(['date', 'media_source'])['total_revenue'].sum().reset_index()
+                
+                # Get top channels (limit to top 10 to avoid clutter)
+                top_channels = daily_revenue_by_channel.groupby('media_source')['total_revenue'].sum().nlargest(10).index.tolist()
+                daily_revenue_by_channel = daily_revenue_by_channel[daily_revenue_by_channel['media_source'].isin(top_channels)]
+                
+                # Pivot for plotting
+                pivot_df = daily_revenue_by_channel.pivot(index='date', columns='media_source', values='total_revenue').fillna(0)
+                pivot_df = pivot_df.sort_index()
+                
+                # Plot each channel
+                for channel in pivot_df.columns:
+                    ax3.plot(pivot_df.index, pivot_df[channel], label=channel, marker='o', linewidth=2, markersize=4)
+                
+                ax3.set_title('Daily Revenue by Acquisition Channel', fontsize=16, fontweight='bold')
+                ax3.set_ylabel('Revenue ($)', fontsize=12)
+                ax3.set_xlabel('Date', fontsize=12)
+                ax3.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+                ax3.grid(True, alpha=0.3)
+                ax3.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+                ax3.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+                plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45)
+            else:
+                ax3.text(0.5, 0.5, 'Acquisition channel revenue data not available', 
+                        ha='center', va='center', transform=ax3.transAxes, fontsize=12)
+                ax3.set_title('Daily Revenue by Acquisition Channel', fontsize=16, fontweight='bold')
+            
+            # Daily Revenue by Geography (using country from aggregate table)
+            if df_agg is not None and 'country' in df_agg.columns and 'total_revenue' in df_agg.columns:
+                # Calculate daily total revenue by country
+                daily_revenue_by_country = df_agg.groupby(['date', 'country'])['total_revenue'].sum().reset_index()
+                
+                # Get top countries (limit to top 10 to avoid clutter)
+                top_countries = daily_revenue_by_country.groupby('country')['total_revenue'].sum().nlargest(10).index.tolist()
+                daily_revenue_by_country = daily_revenue_by_country[daily_revenue_by_country['country'].isin(top_countries)]
+                
+                # Pivot for plotting
+                pivot_df = daily_revenue_by_country.pivot(index='date', columns='country', values='total_revenue').fillna(0)
+                pivot_df = pivot_df.sort_index()
+                
+                # Plot each country
+                for country in pivot_df.columns:
+                    ax4.plot(pivot_df.index, pivot_df[country], label=country, marker='o', linewidth=2, markersize=4)
+                
+                ax4.set_title('Daily Revenue by Geography', fontsize=16, fontweight='bold')
+                ax4.set_ylabel('Revenue ($)', fontsize=12)
+                ax4.set_xlabel('Date', fontsize=12)
+                ax4.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+                ax4.grid(True, alpha=0.3)
+                ax4.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+                ax4.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+                plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45)
+            else:
+                ax4.text(0.5, 0.5, 'Geographic revenue data not available', 
+                        ha='center', va='center', transform=ax4.transAxes, fontsize=12)
+                ax4.set_title('Daily Revenue by Geography', fontsize=16, fontweight='bold')
             
             plt.tight_layout()
             
@@ -154,6 +358,106 @@ class ReportVisualizationGenerator:
             
         except Exception as e:
             print(f"❌ Error creating revenue trend chart: {e}")
+            import traceback
+            traceback.print_exc()
+            return ""
+    
+    def create_arpu_performance_chart(self) -> str:
+        """Create ARPU performance charts: overall ARPU and ARPU by acquisition channel."""
+        try:
+            # Load aggregated data for ARPU calculation
+            agg_file = f"{self.data_dir}/aggregations/aggregated_data.csv"
+            if not os.path.exists(agg_file):
+                print(f"⚠️ Aggregated data file not found: {agg_file}")
+                return ""
+                
+            df = pd.read_csv(agg_file)
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'])
+                # Filter to last complete date if set
+                if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                    df = df[df['date'] <= self.last_complete_date]
+            
+            # Check required columns
+            if 'total_revenue' not in df.columns or 'user_id' not in df.columns:
+                print(f"⚠️ Required columns (total_revenue, user_id) not found in aggregated data")
+                return ""
+            
+            # Create figure with 2 subplots
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+            
+            # 1. Day-wise Overall Average Revenue Per User (ARPU)
+            if 'date' in df.columns:
+                # Calculate daily ARPU: total revenue / unique users per day
+                daily_arpu = df.groupby('date').agg({
+                    'total_revenue': 'sum',
+                    'user_id': 'nunique'
+                }).reset_index()
+                daily_arpu['arpu'] = daily_arpu['total_revenue'] / daily_arpu['user_id']
+                daily_arpu = daily_arpu[daily_arpu['arpu'] > 0]  # Remove days with zero ARPU (optional)
+                
+                ax1.plot(daily_arpu['date'], daily_arpu['arpu'], marker='o', linewidth=2, markersize=6, color='purple')
+                ax1.set_title('Daily Average Revenue Per User (ARPU)', fontsize=16, fontweight='bold')
+                ax1.set_ylabel('ARPU ($)', fontsize=12)
+                ax1.set_xlabel('Date', fontsize=12)
+                ax1.grid(True, alpha=0.3)
+                ax1.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+                ax1.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+                plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45)
+            else:
+                ax1.text(0.5, 0.5, 'Date column not available', 
+                        ha='center', va='center', transform=ax1.transAxes, fontsize=12)
+                ax1.set_title('Daily Average Revenue Per User (ARPU)', fontsize=16, fontweight='bold')
+            
+            # 2. Day-wise ARPU by Acquisition Channel (using media_source)
+            if 'media_source' in df.columns and 'date' in df.columns:
+                # Calculate daily ARPU by media_source
+                daily_arpu_by_channel = df.groupby(['date', 'media_source']).agg({
+                    'total_revenue': 'sum',
+                    'user_id': 'nunique'
+                }).reset_index()
+                daily_arpu_by_channel['arpu'] = daily_arpu_by_channel['total_revenue'] / daily_arpu_by_channel['user_id']
+                daily_arpu_by_channel = daily_arpu_by_channel[daily_arpu_by_channel['arpu'] > 0]
+                
+                # Get top channels (limit to top 10 to avoid clutter)
+                top_channels = daily_arpu_by_channel.groupby('media_source')['total_revenue'].sum().nlargest(10).index.tolist()
+                daily_arpu_by_channel = daily_arpu_by_channel[daily_arpu_by_channel['media_source'].isin(top_channels)]
+                
+                # Pivot for plotting
+                pivot_df = daily_arpu_by_channel.pivot(index='date', columns='media_source', values='arpu').fillna(0)
+                pivot_df = pivot_df.sort_index()
+                
+                # Plot each channel
+                for channel in pivot_df.columns:
+                    ax2.plot(pivot_df.index, pivot_df[channel], label=channel, marker='o', linewidth=2, markersize=4)
+                
+                ax2.set_title('Daily ARPU by Acquisition Channel', fontsize=16, fontweight='bold')
+                ax2.set_ylabel('ARPU ($)', fontsize=12)
+                ax2.set_xlabel('Date', fontsize=12)
+                ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+                ax2.grid(True, alpha=0.3)
+                ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+                ax2.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+                plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45)
+            else:
+                ax2.text(0.5, 0.5, 'Acquisition channel data not available', 
+                        ha='center', va='center', transform=ax2.transAxes, fontsize=12)
+                ax2.set_title('Daily ARPU by Acquisition Channel', fontsize=16, fontweight='bold')
+            
+            plt.tight_layout()
+            
+            # Save chart
+            chart_path = f"{self.output_dir}/arpu_performance.png"
+            plt.savefig(chart_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+            print(f"✅ ARPU performance chart saved: {chart_path}")
+            return chart_path
+            
+        except Exception as e:
+            print(f"❌ Error creating ARPU performance chart: {e}")
+            import traceback
+            traceback.print_exc()
             return ""
     
     def create_retention_funnel_chart(self) -> str:
@@ -168,6 +472,10 @@ class ReportVisualizationGenerator:
             df = pd.read_csv(agg_file)
             df['date'] = pd.to_datetime(df['date'])
             df['cohort_date'] = pd.to_datetime(df['cohort_date'])
+            
+            # Filter to last complete date if set
+            if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                df = df[df['date'] <= self.last_complete_date]
             
             # Calculate retention rates by cohort
             retention_data = []
@@ -266,11 +574,20 @@ class ReportVisualizationGenerator:
                 
             df = pd.read_csv(agg_file)
             
+            # Filter to last complete date if set (event funnel uses date column for filtering)
+            if hasattr(self, 'last_complete_date') and self.last_complete_date is not None:
+                if 'date' in df.columns:
+                    df['date'] = pd.to_datetime(df['date'])
+                    df = df[df['date'] <= self.last_complete_date]
+            
             # Calculate event funnel metrics
             total_users = len(df)
             
             # App opened (users with any events)
             app_opened = len(df[df['total_events'] > 0])
+            
+            # FTUE completed (users with ftue_complete_time)
+            ftue_completed = len(df[df['ftue_complete_time'].notna()])
             
             # First level completed (users with level_1_time)
             first_level_completed = len(df[df['level_1_time'].notna()])
@@ -281,38 +598,62 @@ class ReportVisualizationGenerator:
             # Third level completed (users with level_3_time)
             third_level_completed = len(df[df['level_3_time'].notna()])
             
-            # FTUE completed (users with ftue_complete_time)
-            ftue_completed = len(df[df['ftue_complete_time'].notna()])
+            # Ad watched count: Users with first_purchase_time (any revenue) but first_iap_purchase_time is null
+            # This indicates their first purchase/revenue event was an ad watch
+            # We need to check at user level, not user-day level
+            if 'first_purchase_time' in df.columns and 'first_iap_purchase_time' in df.columns and 'ad_revenue' in df.columns:
+                # Get unique users and check their first purchase type
+                # Aggregate to user level: take min of first_purchase_time, check if first_iap_purchase_time exists, sum ad_revenue
+                user_first_purchase = df.groupby('user_id').agg({
+                    'first_purchase_time': lambda x: x[x.notna()].min() if x.notna().any() else None,
+                    'first_iap_purchase_time': lambda x: x.notna().any(),
+                    'ad_revenue': 'sum'
+                }).reset_index()
+                
+                # Users whose first purchase was ad (have first_purchase_time but no first_iap_purchase_time and have ad revenue)
+                ad_watched_users = len(user_first_purchase[
+                    (user_first_purchase['first_purchase_time'].notna()) & 
+                    (~user_first_purchase['first_iap_purchase_time']) &
+                    (user_first_purchase['ad_revenue'] > 0)
+                ])
+            else:
+                ad_watched_users = 0
             
-            # Game completed (users with game_complete_time)
-            game_completed = len(df[df['game_complete_time'].notna()])
+            # First IAP purchase count: Users with first_iap_purchase_time
+            if 'first_iap_purchase_time' in df.columns:
+                first_iap_purchase_count = df[df['first_iap_purchase_time'].notna()]['user_id'].nunique()
+            else:
+                first_iap_purchase_count = 0
             
-            # Create funnel data
+            # Create funnel data (in correct order)
             funnel_data = [
                 total_users,
                 app_opened,
+                ftue_completed,
                 first_level_completed,
                 second_level_completed,
                 third_level_completed,
-                ftue_completed,
-                game_completed
+                ad_watched_users,
+                first_iap_purchase_count
             ]
             
             funnel_labels = [
                 'Total Users',
                 'App Opened',
+                'FTUE Completed',
                 'Level 1 Completed',
                 'Level 2 Completed',
                 'Level 3 Completed',
-                'FTUE Completed',
-                'Game Completed'
+                'Ad Watched',
+                'First IAP Purchase'
             ]
             
-            # Calculate conversion rates
+            # Calculate conversion rates (all relative to App Opened, i.e., funnel_data[1])
             conversion_rates = []
+            app_opened_count = funnel_data[1]  # App Opened is the denominator for all conversion rates
             for i in range(1, len(funnel_data)):
-                if funnel_data[i-1] > 0:
-                    rate = (funnel_data[i] / funnel_data[i-1]) * 100
+                if app_opened_count > 0:
+                    rate = (funnel_data[i] / app_opened_count) * 100
                     conversion_rates.append(rate)
                 else:
                     conversion_rates.append(0)
@@ -379,6 +720,11 @@ class ReportVisualizationGenerator:
         if charts.get('revenue_trend'):
             summary.append("### 💰 Revenue Performance")
             summary.append("![Revenue Trends](visualizations/revenue_trend.png)")
+            summary.append("")
+        
+        if charts.get('arpu_performance'):
+            summary.append("### 📊 ARPU Performance")
+            summary.append("![ARPU Performance](visualizations/arpu_performance.png)")
             summary.append("")
             
         if charts.get('retention_funnel'):

@@ -129,19 +129,62 @@ def build_where_clause(app_filter, date_start, date_end, timestamp_column: str, 
     
     return cohort_where_clause, main_where_clause
 
-def generate_level_fields(events, event_name_col: str, timestamp_column: str):
-    """Generate level fields using AF pattern 'complete_bossladder_level<N>'"""
+def generate_level_fields(events, event_name_col: str, timestamp_column: str, key_events: dict = None):
+    """Generate level fields using field_mapping.json configuration
+    
+    Args:
+        events: Event counts from schema mapping (for backward compatibility)
+        event_name_col: Event name column
+        timestamp_column: Timestamp column
+        key_events: Dictionary from field_mapping.json key_events section
+    """
     level_fields = []
     level_counts = []
-    # Synthesize first 10 levels via regex on event_name
-    for i in range(1, 11):
-        level_fields.append(
-            f"MIN(CASE WHEN REGEXP_EXTRACT(LOWER({event_name_col}), r'complete_bossladder_level(\\d+)') = '{i}' THEN {timestamp_column} END) as level_{i}_time"
-        )
-        level_counts.append(
-            f"COUNT(CASE WHEN REGEXP_EXTRACT(LOWER({event_name_col}), r'complete_bossladder_level(\\d+)') = '{i}' THEN 1 END) as level_{i}_count"
-        )
-    # No explicit events list returned (regex-based)
+    
+    if key_events:
+        # Generate level 1 field from field_mapping.json
+        level_1_events = key_events.get('level_1_completion_events', [])
+        if level_1_events:
+            # Use TRIM and exact match with quotes for exact event name matching
+            level_1_conditions = []
+            for event in level_1_events:
+                # Handle both exact match and case-insensitive match
+                event_clean = event.strip().lower()
+                level_1_conditions.append(f"TRIM(LOWER({event_name_col})) = '{event_clean}'")
+            level_1_sql = " OR ".join(level_1_conditions)
+            print(f"🔍 Level 1 SQL condition: {level_1_sql}")
+            print(f"🔍 Level 1 events from field_mapping: {level_1_events}")
+            level_fields.append(
+                f"MIN(CASE WHEN {level_1_sql} THEN {timestamp_column} END) as level_1_time"
+            )
+            level_counts.append(
+                f"COUNT(CASE WHEN {level_1_sql} THEN 1 END) as level_1_count"
+            )
+        
+        # Generate levels 2-10 from field_mapping.json pattern
+        other_levels = key_events.get('other_level_completion_events', {})
+        required_levels = other_levels.get('required_levels', [2, 3, 4, 5, 6, 7, 8, 9, 10])
+        pattern = other_levels.get('pattern', 'complete_bossladder_level{level}')
+        
+        for level in required_levels:
+            # Replace {level} placeholder in pattern
+            pattern_with_level = pattern.replace('{level}', str(level))
+            level_fields.append(
+                f"MIN(CASE WHEN LOWER({event_name_col}) = '{pattern_with_level.lower()}' THEN {timestamp_column} END) as level_{level}_time"
+            )
+            level_counts.append(
+                f"COUNT(CASE WHEN LOWER({event_name_col}) = '{pattern_with_level.lower()}' THEN 1 END) as level_{level}_count"
+            )
+    else:
+        # Fallback: use regex-based approach for levels 1-10
+        for i in range(1, 11):
+            level_fields.append(
+                f"MIN(CASE WHEN REGEXP_EXTRACT(LOWER({event_name_col}), r'complete_bossladder_level(\\d+)') = '{i}' THEN {timestamp_column} END) as level_{i}_time"
+            )
+            level_counts.append(
+                f"COUNT(CASE WHEN REGEXP_EXTRACT(LOWER({event_name_col}), r'complete_bossladder_level(\\d+)') = '{i}' THEN 1 END) as level_{i}_count"
+            )
+    
     return level_fields, level_counts, []
 
 def generate_aggregation_query(dataset_name, schema_mapping, limit=1000, single_date=None):
@@ -180,9 +223,31 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000, single_
     # Get separate WHERE clauses for cohort and main aggregation
     cohort_where_clause, main_where_clause = build_where_clause(app_filter, date_start, date_end, timestamp_col, single_date=single_date)
     
+    # Load field mapping to get funnel events
+    field_mapping_path = os.environ.get('FIELD_MAPPING_JSON')
+    key_events = {}
+    if field_mapping_path and os.path.exists(field_mapping_path):
+        try:
+            with open(field_mapping_path, 'r') as fm:
+                fm_json = json.load(fm)
+                key_events = fm_json.get('key_events', {})
+        except Exception as e:
+            print(f"⚠️ Warning: Could not load field_mapping.json: {e}. Using fallback logic.")
+    
     # Get events for dynamic field generation
     events = schema_mapping.get('events', {}).get('event_counts', {})
-    level_fields, level_counts, level_events = generate_level_fields(events, event_name_col, timestamp_col)
+    level_fields, level_counts, level_events = generate_level_fields(events, event_name_col, timestamp_col, key_events)
+    
+    # Generate FTUE complete field from field_mapping.json
+    ftue_complete_field = ""
+    if key_events and 'ftue_completion_events' in key_events:
+        ftue_events = key_events['ftue_completion_events']
+        if ftue_events:
+            ftue_events_sql = ", ".join([f"'{event.lower()}'" for event in ftue_events])
+            ftue_complete_field = f"MIN(CASE WHEN LOWER({event_name_col}) IN ({ftue_events_sql}) THEN {timestamp_col} END) as ftue_complete_time,"
+    else:
+        # Fallback: use hardcoded values
+        ftue_complete_field = f"MIN(CASE WHEN LOWER({event_name_col}) IN ('ftue_complete','af_tutorial_completion') THEN {timestamp_col} END) as ftue_complete_time,"
     
     # Get recommendations
     recommendations = schema_mapping.get('recommendations', {})
@@ -246,6 +311,27 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000, single_
     # Build SQL IN lists
     iap_events_sql = ", ".join([f"'{e}'" for e in iap_events_list]) if iap_events_list else ""
     ad_events_sql = ", ".join([f"'{e}'" for e in ad_events_list]) if ad_events_list else ""
+    
+    # Build IAP classification condition (reusable for revenue and timestamps)
+    iap_condition = f"""
+            (
+              UPPER({event_name_col}) LIKE '%IAP%' OR 
+              UPPER({event_name_col}) LIKE '%PURCHASE%' OR 
+              UPPER({event_name_col}) LIKE '%BUY%' OR
+              UPPER({event_name_col}) LIKE '%INAPP%' OR
+              UPPER({event_name_col}) LIKE '%TRANSACTION%'
+              {(' OR ' + event_name_col + ' IN (' + iap_events_sql + ')') if iap_events_sql else ''}
+            )
+            AND NOT (
+              UPPER({event_name_col}) LIKE '%AD%' OR 
+              UPPER({event_name_col}) LIKE '%ADS%' OR 
+              UPPER({event_name_col}) LIKE '%ADMON%' OR
+              UPPER({event_name_col}) LIKE '%ADVERTISEMENT%' OR
+              UPPER({event_name_col}) LIKE '%BANNER%' OR
+              UPPER({event_name_col}) LIKE '%INTERSTITIAL%' OR
+              UPPER({event_name_col}) LIKE '%REWARDED%'
+              {(' OR ' + event_name_col + ' IN (' + ad_events_sql + ')') if ad_events_sql else ''}
+            )"""
 
     query = f"""
     -- Enhanced User Daily Aggregation with Session Duration and Revenue Classification (Final Working)
@@ -285,26 +371,8 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000, single_
         SUM(CASE WHEN {revenue_col} > 0 THEN {revenue_col} ELSE 0 END) as total_revenue_usd,
         
         -- Revenue by Type (Mutually Exclusive Classification)
-        SUM(CASE WHEN {revenue_col} > 0 AND (
-            (
-              UPPER({event_name_col}) LIKE '%IAP%' OR 
-              UPPER({event_name_col}) LIKE '%PURCHASE%' OR 
-              UPPER({event_name_col}) LIKE '%BUY%' OR
-              UPPER({event_name_col}) LIKE '%INAPP%' OR
-              UPPER({event_name_col}) LIKE '%TRANSACTION%'
-              {(' OR ' + event_name_col + ' IN (' + iap_events_sql + ')') if iap_events_sql else ''}
-            )
-            AND NOT (
-              UPPER({event_name_col}) LIKE '%AD%' OR 
-              UPPER({event_name_col}) LIKE '%ADS%' OR 
-              UPPER({event_name_col}) LIKE '%ADMON%' OR
-              UPPER({event_name_col}) LIKE '%ADVERTISEMENT%' OR
-              UPPER({event_name_col}) LIKE '%BANNER%' OR
-              UPPER({event_name_col}) LIKE '%INTERSTITIAL%' OR
-              UPPER({event_name_col}) LIKE '%REWARDED%'
-              {(' OR ' + event_name_col + ' IN (' + ad_events_sql + ')') if ad_events_sql else ''}
-            )
-        ) THEN {revenue_col} ELSE 0 END) as iap_revenue,
+        SUM(CASE WHEN {revenue_col} > 0 AND {iap_condition}
+        THEN {revenue_col} ELSE 0 END) as iap_revenue,
         
         SUM(CASE WHEN {revenue_col} > 0 AND (
             (
@@ -336,26 +404,7 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000, single_
         ) THEN {revenue_col} ELSE 0 END) as subscription_revenue,
         
         -- Revenue Event Counts by Type (Enhanced Generic Classification)
-        COUNT(CASE WHEN {revenue_col} > 0 AND (
-            (
-              UPPER({event_name_col}) LIKE '%IAP%' OR 
-              UPPER({event_name_col}) LIKE '%PURCHASE%' OR 
-              UPPER({event_name_col}) LIKE '%BUY%' OR
-              UPPER({event_name_col}) LIKE '%INAPP%' OR
-              UPPER({event_name_col}) LIKE '%TRANSACTION%'
-              {(' OR ' + event_name_col + ' IN (' + iap_events_sql + ')') if iap_events_sql else ''}
-            )
-            AND NOT (
-              UPPER({event_name_col}) LIKE '%AD%' OR 
-              UPPER({event_name_col}) LIKE '%ADS%' OR 
-              UPPER({event_name_col}) LIKE '%ADMON%' OR
-              UPPER({event_name_col}) LIKE '%ADVERTISEMENT%' OR
-              UPPER({event_name_col}) LIKE '%BANNER%' OR
-              UPPER({event_name_col}) LIKE '%INTERSTITIAL%' OR
-              UPPER({event_name_col}) LIKE '%REWARDED%'
-              {(' OR ' + event_name_col + ' IN (' + ad_events_sql + ')') if ad_events_sql else ''}
-            )
-        ) THEN 1 END) as iap_events_count,
+        COUNT(CASE WHEN {revenue_col} > 0 AND {iap_condition} THEN 1 END) as iap_events_count,
         
         COUNT(CASE WHEN {revenue_col} > 0 AND (
             (
@@ -390,14 +439,14 @@ def generate_aggregation_query(dataset_name, schema_mapping, limit=1000, single_
         -- Revenue Timestamps
         MIN(CASE WHEN {revenue_col} > 0 THEN {timestamp_col} END) as first_purchase_time,
         MAX(CASE WHEN {revenue_col} > 0 THEN {timestamp_col} END) as last_purchase_time,
+        MIN(CASE WHEN {revenue_col} > 0 AND {iap_condition} THEN {timestamp_col} END) as first_iap_purchase_time,
         
         -- Event Counts & Engagement Metrics
         COUNT(*) as total_events,
         COUNT(DISTINCT {event_name_col}) as unique_events,
         
-        -- Key Milestone Events (AF-aware)
-        MIN(CASE WHEN LOWER({event_name_col}) IN ('ftue_complete','af_tutorial_completion') THEN {timestamp_col} END) as ftue_complete_time,
-        MIN(CASE WHEN LOWER({event_name_col}) IN ('game_complete','af_game_complete') THEN {timestamp_col} END) as game_complete_time,
+        -- Key Milestone Events (from field_mapping.json)
+        {ftue_complete_field}
         
         -- Dynamic Level Fields
         {', '.join(level_fields) if level_fields else '-- No level events found'},
