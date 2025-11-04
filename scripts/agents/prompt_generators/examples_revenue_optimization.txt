@@ -1,0 +1,27 @@
+EXAMPLES OF GOOD VS BAD INSIGHTS:
+
+BAD:
+{
+  "recommendation": "Develop targeted upsell strategies",
+  "evidence": "Revenue can be improved"
+}
+
+GOOD:
+{
+  "recommendation": "For high-engagement users (46.6% of base), implement a premium tier unlock prompt on day 3 post-install (when 67% reach level 5). Target ARPU increase from $0.15 to $0.35 within 30 days based on similar user conversion rates.",
+  "evidence": "High-engagement segment shows 46.6% of total users, average ARPU $0.15. Day-3 cohort analysis shows 67% reach level 5 by day 3. Similar premium prompts show 35% conversion rate in A/B tests."
+}
+
+BAD:
+{
+  "recommendation": "Optimize monetization through better features",
+  "evidence": "Revenue is low"
+}
+
+GOOD:
+{
+  "recommendation": "Whale users (0.8% of base, 68% of revenue) spend average $45.20. Implement VIP program for users spending >$20 within first 7 days, offering exclusive content. Launch test with 2,000 users starting week of 2025-11-10, expecting 15% increase in repeat purchases.",
+  "evidence": "Whale segment analysis: 0.8% of users generate $45.20 avg spend vs $1.12 overall. 78% of whales make first purchase by day 7. VIP programs show 15-20% increase in repeat purchases in similar apps."
+}
+
+

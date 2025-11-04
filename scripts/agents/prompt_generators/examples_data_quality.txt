@@ -1,0 +1,27 @@
+EXAMPLES OF GOOD VS BAD INSIGHTS:
+
+BAD:
+{
+  "recommendation": "Improve data quality",
+  "evidence": "Some data quality issues exist"
+}
+
+GOOD:
+{
+  "recommendation": "Revenue data shows 12.3% missing values in 'revenue_amount' column for dates 2025-09-10 to 2025-09-15. Implement data validation check in ETL pipeline to flag missing revenue_amount when 'purchase' event exists. Fix historical gaps by backfilling from transaction logs. Complete within 7 days to prevent revenue reporting inaccuracies.",
+  "evidence": "Data quality audit: 12.3% of revenue records (2,847 rows) missing revenue_amount for 5-day period. Cross-reference with transaction_log shows 2,841 of these have matching 'purchase' events. Estimated impact: $8,450 in unreported revenue for period."
+}
+
+BAD:
+{
+  "recommendation": "Fix data completeness issues",
+  "evidence": "Some columns have null values"
+}
+
+GOOD:
+{
+  "recommendation": "User segmentation data missing 'last_active_date' for 8,423 users (5.2% of base) all from cohort 2025-09-20. Root cause: event tracking bug on that date. Backfill from session_data table using last_session_date. Schedule fix for deployment on 2025-11-12. Impact: Segmentation accuracy will improve from 94.8% to 100%.",
+  "evidence": "Data completeness: 8,423 users missing last_active_date (5.2% of total). All from single cohort 2025-09-20. Investigation shows event tracking API returned 500 errors for 3-hour window that day. session_data table has complete data. Backfill script ready, estimated 30 min execution time."
+}
+
+

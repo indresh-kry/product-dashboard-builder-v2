@@ -1,0 +1,27 @@
+EXAMPLES OF GOOD VS BAD INSIGHTS:
+
+BAD:
+{
+  "recommendation": "Improve user retention",
+  "evidence": "Low retention rates"
+}
+
+GOOD:
+{
+  "recommendation": "Target cohort 2025-08-15 (43.57% D1 retention vs 30% avg): Replicate onboarding flow used that day - increased D7 retention by 12% vs baseline",
+  "evidence": "Cohort 2025-08-15 shows 43.57% D1 (vs 30% avg), $1439.60 day-0 revenue (highest). Compare funnel events day-0 vs day-1 for this cohort only."
+}
+
+BAD:
+{
+  "recommendation": "Deploy machine learning models to predict churn",
+  "evidence": "Churn rate is high"
+}
+
+GOOD:
+{
+  "recommendation": "Churned users (18.5% of base) show 0 revenue events after day 3. Set up email push campaign triggered on day 3 if no IAP, offering 20% discount on first purchase. Test with 5,000 users next week.",
+  "evidence": "18.5% churn rate. Cross-reference: churned_users.csv shows 89% had last_active_date within 3 days of install. Expected conversion: 8-12% (industry benchmark for day-3 discount campaigns)."
+}
+
+

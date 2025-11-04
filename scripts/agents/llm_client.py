@@ -115,7 +115,7 @@ class LLMClient:
         
         return api_key
     
-    def call(self, prompt: str, system_prompt: str, temperature: float = 0.3, max_tokens: int = 1000) -> Dict[str, Any]:
+    def call(self, prompt: str, system_prompt: str, temperature: float = 0.3, max_tokens: int = 3000) -> Dict[str, Any]:
         """Call the LLM API with the given prompt."""
         if not self.client:
             return {
@@ -148,30 +148,33 @@ class LLMClient:
             except json.JSONDecodeError:
                 # Try to extract JSON from markdown code blocks
                 import re
-                json_match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
+                json_match = re.search(r'```json\s*(\{.*?)\s*```', content, re.DOTALL)
+                if not json_match:
+                    # Try without closing ```
+                    json_match = re.search(r'```json\s*(\{.*)', content, re.DOTALL)
                 if json_match:
-                    try:
-                        parsed_response = json.loads(json_match.group(1))
+                    json_str = json_match.group(1).strip()
+                    # Try to fix incomplete JSON
+                    parsed_response = self._try_parse_or_fix_json(json_str)
+                    if parsed_response:
                         return {
                             'raw_response': content,
                             'parsed_response': parsed_response,
                             'success': True
                         }
-                    except json.JSONDecodeError:
-                        pass
                 
                 # Try to find JSON object in the text
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                json_match = re.search(r'(\{.*)', content, re.DOTALL)
                 if json_match:
-                    try:
-                        parsed_response = json.loads(json_match.group(0))
+                    json_str = json_match.group(1).strip()
+                    # Try to fix incomplete JSON
+                    parsed_response = self._try_parse_or_fix_json(json_str)
+                    if parsed_response:
                         return {
                             'raw_response': content,
                             'parsed_response': parsed_response,
                             'success': True
                         }
-                    except json.JSONDecodeError:
-                        pass
                 
                 # If all parsing fails, return error structure
                 return {
@@ -188,6 +191,54 @@ class LLMClient:
                 'success': False,
                 'error': str(e)
             }
+    
+    def _try_parse_or_fix_json(self, json_str: str) -> Optional[Dict[str, Any]]:
+        """Try to parse JSON, or fix incomplete JSON by closing brackets/braces."""
+        import re
+        
+        # First try direct parse
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            pass
+        
+        # Remove trailing commas that might cause issues
+        fixed_json = re.sub(r',\s*}', '}', json_str)
+        fixed_json = re.sub(r',\s*]', ']', fixed_json)
+        # Remove trailing comma before end of string
+        fixed_json = re.sub(r',\s*$', '', fixed_json, flags=re.MULTILINE)
+        
+        # Count unclosed brackets and braces
+        open_braces = fixed_json.count('{') - fixed_json.count('}')
+        open_brackets = fixed_json.count('[') - fixed_json.count(']')
+        
+        # Close unclosed structures (start with brackets, then braces)
+        if open_brackets > 0:
+            fixed_json += ']' * open_brackets
+        if open_braces > 0:
+            fixed_json += '}' * open_braces
+        
+        # Try parsing the fixed JSON
+        try:
+            return json.loads(fixed_json)
+        except json.JSONDecodeError:
+            # If still failing, try progressive truncation to find valid JSON
+            # Start from the beginning and find the largest valid prefix
+            for i in range(len(fixed_json), 0, -100):
+                truncated = fixed_json[:i]
+                # Try to close the truncated JSON
+                truncated_braces = truncated.count('{') - truncated.count('}')
+                truncated_brackets = truncated.count('[') - truncated.count(']')
+                if truncated_braces > 0:
+                    truncated += '}' * truncated_braces
+                if truncated_brackets > 0:
+                    truncated += ']' * truncated_brackets
+                try:
+                    return json.loads(truncated)
+                except json.JSONDecodeError:
+                    continue
+        
+        return None
     
     def is_available(self) -> bool:
         """Check if the LLM client is available."""

@@ -1,0 +1,27 @@
+EXAMPLES OF GOOD VS BAD INSIGHTS:
+
+BAD:
+{
+  "recommendation": "Improve engagement for low-engagement segment",
+  "evidence": "Low engagement users exist"
+}
+
+GOOD:
+{
+  "recommendation": "Low-engagement segment (32% of base, avg 2.3 sessions/week) shows 89% drop-off by day 5. Implement push notification campaign on day 4 offering personalized content based on their last played level. Test with 10,000 users from segment starting next Monday, targeting 25% increase in day-7 retention.",
+  "evidence": "Low-engagement segment: 32% of users, 2.3 avg sessions/week vs 8.5 overall. Day-5 retention is 11% vs 42% for high-engagement. Last session data shows 73% stop at levels 3-7. Push notifications on day 4 show 22-28% retention lift in similar segments."
+}
+
+BAD:
+{
+  "recommendation": "Create re-engagement campaigns for churned users",
+  "evidence": "Some users have churned"
+}
+
+GOOD:
+{
+  "recommendation": "Churned segment (18.5% of base, inactive >30 days) had last purchase average 45 days ago. Send personalized email campaign on day 35 of inactivity offering 25% discount on their most purchased category. Launch test with 5,000 churned users starting 2025-11-15, expecting 12-18% reactivation rate.",
+  "evidence": "Churned segment analysis: 18.5% of users, avg 45 days since last purchase. 67% of churned users' last purchase was in single category. Similar reactivation campaigns show 12-18% conversion. Email open rates for churned users: 28%."
+}
+
+

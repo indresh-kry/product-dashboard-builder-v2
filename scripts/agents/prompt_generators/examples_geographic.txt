@@ -1,0 +1,27 @@
+EXAMPLES OF GOOD VS BAD INSIGHTS:
+
+BAD:
+{
+  "recommendation": "Focus on underperforming regions",
+  "evidence": "Some regions have lower metrics"
+}
+
+GOOD:
+{
+  "recommendation": "APAC region (23% of user base) shows ARPU $0.45 vs $1.12 global avg. Implement localized payment methods (Alipay, Paytm) for APAC users. Launch in India and Southeast Asia starting 2025-11-20, targeting ARPU increase from $0.45 to $0.78 within 60 days based on similar localization projects showing 73% ARPU increase.",
+  "evidence": "APAC: 23% of users, $0.45 ARPU vs $1.12 global. Payment method analysis shows 67% of APAC users abandon at payment step. Competitors show 73% ARPU increase after adding Alipay/Paytm. Implementation timeline: 2 weeks for integration."
+}
+
+BAD:
+{
+  "recommendation": "Expand marketing in high-performing regions",
+  "evidence": "Some regions perform well"
+}
+
+GOOD:
+{
+  "recommendation": "US region shows $2.34 ARPU (2.1x global avg) and 42% D7 retention (1.4x global). Increase US user acquisition budget by 40% starting next quarter, targeting user base growth from current 180K to 250K US users within 90 days. Expected incremental revenue: $163,800 based on current conversion rates.",
+  "evidence": "US: $2.34 ARPU vs $1.12 global, 42% D7 vs 30% global. User acquisition cost: $3.20 per user. Current US user base: 180K (32% of revenue). Budget increase of 40% ($200K) can acquire ~62K new users at current CAC. Revenue projection: $2.34 ARPU × 62K users × 0.42 retention × 30 days = $163,800."
+}
+
+

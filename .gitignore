@@ -1,3 +1,6 @@
 *.sql
 run_logs/
 .DS_Store
+creds.json
+scripts/creds.json
+*.json

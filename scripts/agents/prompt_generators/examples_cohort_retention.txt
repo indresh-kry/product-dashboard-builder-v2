@@ -1,0 +1,27 @@
+EXAMPLES OF GOOD VS BAD INSIGHTS:
+
+BAD:
+{
+  "recommendation": "Increase retention for underperforming cohorts",
+  "evidence": "Some cohorts have low retention"
+}
+
+GOOD:
+{
+  "recommendation": "Cohort 2025-08-15 shows 43.57% D1 retention vs 30% average. Replicate the onboarding flow A/B test variant that was active that day. Apply to new cohorts starting 2025-11-15, targeting D1 retention increase from 30% to 38% within 2 weeks.",
+  "evidence": "Cohort 2025-08-15: 43.57% D1 (vs 30% avg), 28.3% D7 (vs 18% avg). A/B test log shows variant 'onboarding_v2_short' was active 67% of that day. This variant reduced onboarding time by 40% vs baseline."
+}
+
+BAD:
+{
+  "recommendation": "Improve early retention through better onboarding",
+  "evidence": "D1 retention varies"
+}
+
+GOOD:
+{
+  "recommendation": "Cohorts with D1 retention <25% (5 cohorts: 2025-09-01 to 2025-09-05) show correlation with high tutorial completion time (>8 min). Implement skip-optional-tutorial feature for users who complete first 3 levels in <15 min. Test with next 3 cohorts (starting 2025-11-10), expecting D1 retention increase from 22% to 28%.",
+  "evidence": "5 cohorts show D1 retention <25%. Analysis: avg tutorial time 8.3 min for low-retention vs 4.2 min for high-retention. 78% of users who skip optional tutorial sections show D1 retention 35% vs 22% for full tutorial. Feature can be implemented in 5 days."
+}
+
+

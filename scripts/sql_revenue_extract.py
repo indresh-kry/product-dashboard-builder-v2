@@ -6,13 +6,13 @@ import pandas as pd
 client = bigquery.Client(location="EU")
 
 query = """
-SELECT DISTINCT DATE(event_time), event_name, sum(event_revenue_usd) as daily_rev, count(distinct appsflyer_id) as users
--- SELECT country_code, sum(event_revenue_usd) as daily_rev, count(distinct appsflyer_id) as users
+SELECT DISTINCT DATE(event_time), count(distinct appsflyer_id) as users
+-- SELECT sum(event_revenue_usd) as daily_rev, count(distinct appsflyer_id) as users
 FROM `gc-prod-459709.fm_ingest.highway_racer_v1`
 WHERE DATE(event_time) >= '2025-08-15'
 AND DATE(event_time) <= '2025-08-30'
-AND event_revenue_usd IS NOT NULL
-group by 1,2
+--AND event_revenue_usd IS NOT NULL
+group by 1
 order by 1
 """
 
