@@ -10,7 +10,7 @@ Sends entire filtered dataset to LLM (not just first 5 rows).
 
 import json
 import pandas as pd
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .base_generator import BasePromptGenerator
 
 class DataQualityPromptGenerator(BasePromptGenerator):
@@ -19,65 +19,103 @@ class DataQualityPromptGenerator(BasePromptGenerator):
     def __init__(self):
         super().__init__("data_quality")
     
-    def format_data_for_prompt(self, data: Dict[str, Any]) -> str:
-        """Format data for inclusion in prompts - sends ENTIRE dataset for data quality data."""
-        if not data:
-            return "No data available for analysis."
-        
-        formatted_sections = []
-        
-        for key, value in data.items():
-            if key == 'summary':
-                continue
-                
-            if isinstance(value, pd.DataFrame):
-                # For data quality data, send the ENTIRE dataset (not just head())
-                if len(value) > 0:
-                    formatted_sections.append(
-                        f"**{key.replace('_', ' ').title()}:**\n"
-                        f"Total rows: {len(value)}\n"
-                        f"Columns: {', '.join(value.columns)}\n"
-                        f"\n{value.to_string(index=False)}"
-                    )
-                else:
-                    formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\nNo data available.")
-            elif isinstance(value, dict):
-                formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\n{json.dumps(value, indent=2)}")
-            else:
-                formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\n{str(value)}")
-        
-        return "\n\n".join(formatted_sections)
+    def format_data_for_prompt(self, data: Dict[str, Any], use_summaries: bool = True, max_rows: int = 100) -> str:
+        """Format data for inclusion in prompts with token optimization."""
+        return super().format_data_for_prompt(data, use_summaries=use_summaries, max_rows=max_rows)
     
-    def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any]) -> str:
-        """Generate prompt for data quality analysis."""
+    def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any], charts_info: Optional[str] = None) -> str:
+        """Generate prompt for data quality analysis with enhanced structure."""
         context = self.get_context_info(run_metadata)
+        few_shot_examples = self.get_few_shot_examples()
         
-        prompt = f"""
-# Data Quality Analysis
+        cot_instructions = """
+ANALYSIS PROCESS (think step by step):
 
-**Context:** {context}
+STEP 1: Data Inspection & Chart Review
+- Review the provided charts to identify potential data quality issues (gaps, anomalies, inconsistencies)
+- What are the actual numbers? List top 3 metrics and their values
+- What are the trends visible in the charts? Are there suspicious patterns that suggest data quality issues?
+- Are there visual anomalies in the charts that might indicate data problems? (e.g., "The dau_by_date_trend.png chart shows a sudden drop on 2025-09-07 that might indicate data collection issues")
+- Compare patterns across different charts to identify inconsistencies
 
-**Data Available:**
-{self.format_data_for_prompt(data)}
+STEP 2: Pattern Identification Using Charts
+- What patterns do you see that might indicate data quality issues? (Be specific: "The retention_by_cohort_date_heatmap.png chart shows missing values for recent cohorts" not "data is incomplete")
+- Which time periods or segments show data quality concerns in the charts?
+- Are there gaps or inconsistencies visible in the charts? (List with numbers and chart references)
+- Compare data consistency across different chart visualizations
 
-**Analysis Instructions:**
-{self.get_analysis_instructions()}
+STEP 3: Root Cause Hypothesis with Chart Evidence
+- Why might these data quality issues exist? (Based on data AND chart observations)
+- What chart visualizations reveal data quality problems? (Cite specific charts and what they show)
+- What data supports your hypothesis? (Cite specific rows/values)
 
-**Specific Focus Areas:**
-1. Data completeness assessment
-2. Data consistency evaluation
-3. Data accuracy analysis
-4. Data quality issues
-5. Improvement recommendations
+STEP 4: Recommendation Generation
+- WHO: Which specific data source/time period? Include percentage or size
+- WHAT: What exact action? Use action verbs (implement, set up, test, launch)
+- WHEN: What specific timing? Include dates or day numbers (e.g., "starting 2025-11-10")
+- EXPECTED OUTCOME: What metric changes? Include current and target values with numbers
+- TIMEFRAME: How long? Use days/weeks, not vague terms
+- EVIDENCE: Include at least 2 specific data points AND reference relevant charts (e.g., "As shown in dau_by_date_trend.png, there's a data gap on 2025-09-07")
 
-Please provide a comprehensive analysis of the data quality.
+STEP 5: Validation
+- Can this recommendation be executed next week? (If no, refine)
+- Does it include specific numbers/dates/percentages? (If no, add them)
+- Does it reference specific charts by name? (If no, add chart references)
+- Is it specific to THIS dataset? (If generic, discard)
+- Does it reference actual data points AND chart observations? (If no, discard)
 """
-        return prompt.strip()
+        
+        prompt_parts = ["# Data Quality Analysis", f"\n**Context:** {context}"]
+        
+        # Add chart references if available
+        if charts_info:
+            prompt_parts.append(f"\n{charts_info}")
+        
+        if few_shot_examples:
+            prompt_parts.append(f"\n{few_shot_examples}")
+        prompt_parts.extend([
+            f"\n**Data Available:**",
+            f"{self.format_data_for_prompt(data, use_summaries=True, max_rows=100)}",
+            f"\n**Analysis Instructions:**",
+            f"{self.get_analysis_instructions()}",
+            f"\n{cot_instructions}",
+            f"\n**Specific Focus Areas (USE CHARTS TO IDENTIFY DATA QUALITY ISSUES):**",
+            "1. Data completeness assessment (review dau_by_date_trend.png and revenue_by_date_trend.png for gaps or missing periods)",
+            "2. Data consistency evaluation (compare retention_by_cohort_date_heatmap.png patterns to identify inconsistencies)",
+            "3. Data accuracy analysis (examine charts for anomalies that might indicate data collection issues)",
+            "4. Data quality issues (identify visual patterns in charts that suggest data problems)",
+            "5. Improvement recommendations (reference specific charts when recommending data quality improvements)",
+            "\n**IMPORTANT:** When making observations, explicitly reference the chart name (e.g., 'As shown in dau_by_date_trend.png...') and describe what you see visually. Use charts to identify and support data quality concerns with visual evidence."
+        ])
+        return "\n".join(prompt_parts).strip()
     
     def get_system_prompt(self) -> str:
-        """Get system prompt for data quality analysis."""
-        return """You are a data analyst specializing in data quality analysis. Your role is to:
+        """Get system prompt for data quality analysis with enhanced constraints."""
+        return """You are a product analytics consultant with 10+ years experience in mobile games and product analytics.
 
+CRITICAL CONSTRAINTS:
+- NEVER recommend: 'add features', 'improve UX', 'use ML/AI', 'implement strategies', 'deploy models' (too generic)
+- ALWAYS specify: WHAT metric, WHEN to measure, EXPECTED change, TIME frame
+- REQUIRED format: 'For [segment/date], [action] targeting [specific users] by [date] expecting [metric] change from [current] to [target] within [timeframe]'
+
+GOOD RECOMMENDATION EXAMPLE:
+'Revenue data shows 12.3% missing values in revenue_amount column for dates 2025-09-10 to 2025-09-15. Implement data validation check in ETL pipeline to flag missing revenue_amount when purchase event exists. Fix historical gaps by backfilling from transaction logs. Complete within 7 days to prevent revenue reporting inaccuracies.'
+
+BAD RECOMMENDATION (DO NOT GENERATE):
+'Improve data quality' (too vague)
+
+OUTPUT REQUIREMENTS:
+1. Each recommendation MUST include:
+   - WHO: Specific user segment/cohort/date with percentage (e.g., "high-engagement users, 46.6% of base" or "cohort 2025-08-15")
+   - WHAT: Concrete action (e.g., "implement push notification campaign" not "improve engagement")
+   - WHEN: Specific timing (e.g., "on day 3 post-install" or "starting week of 2025-11-10")
+   - EXPECTED OUTCOME: Metric change with numbers (e.g., "ARPU increase from $0.15 to $0.35")
+   - TIMEFRAME: Specific duration (e.g., "within 30 days" not "next quarter")
+   - EVIDENCE: At least 2 specific data points from the provided data
+2. If data doesn't support a specific recommendation, state 'INSUFFICIENT DATA' rather than generic advice
+3. ALWAYS include specific numbers, percentages, dates, or metrics in every recommendation
+
+**Your Role:**
 1. **Analyze Data Quality**: Identify data quality issues and patterns
 2. **Provide Insights**: Generate actionable insights for data improvement
 3. **Assess Completeness**: Evaluate data completeness and consistency
@@ -123,12 +161,12 @@ Provide your analysis in the following JSON structure:
 ```
 
 **Key Requirements:**
-- AVOID generic recommendations like "add new features" or "improve existing ones"
 - Focus on actionable insights with specific, measurable recommendations
-- Keep language of output simple and avoid jargon
-- Provide atleast 2 data points as evidence to support every finding
+- AVOID generic recommendations like "add new features" or "improve existing ones"
+- Provide at least 2 data points as evidence to support every finding
 - Include concrete numbers, dates, and measurable outcomes
 - Assess data quality with specific examples
 - Include confidence levels in metadata
 - Highlight any data limitations or concerns
-- Make recommendations specific to the actual data patterns observed"""
+- Make recommendations specific to the actual data patterns observed
+- Keep language simple and avoid jargon"""

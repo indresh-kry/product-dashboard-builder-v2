@@ -9,6 +9,7 @@ Manages agent types, configurations, and instantiation.
 """
 
 import json
+import os
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
@@ -108,7 +109,9 @@ class AgentRegistry:
     def get_llm_client(self) -> LLMClient:
         """Get or create LLM client."""
         if self.llm_client is None:
-            self.llm_client = LLMClient()
+            # Get model from config or environment variable
+            model = os.environ.get('LLM_MODEL') or self.agent_configs.get("llm", {}).get("model", "gpt-4-turbo")
+            self.llm_client = LLMClient(model=model)
         return self.llm_client
     
     def get_enabled_agents(self) -> List[str]:

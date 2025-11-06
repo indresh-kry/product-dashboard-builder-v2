@@ -66,10 +66,24 @@ Provide your analysis in a structured JSON format as specified in the system pro
         
         return " | ".join(context_parts) if context_parts else "No context available"
     
-    @abstractmethod
-    def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any]) -> str:
-        """Generate the analysis prompt for this agent type."""
-        pass
+    def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any], charts_info: Optional[str] = None) -> str:
+        """
+        Generate the analysis prompt for this agent type.
+        
+        Args:
+            data: Data dictionary with DataFrames
+            run_metadata: Metadata about the run
+            charts_info: Optional formatted string with chart references
+        """
+        # This is a base implementation - subclasses should override
+        # but include chart info if provided
+        prompt_parts = []
+        
+        if charts_info:
+            prompt_parts.append(charts_info)
+            prompt_parts.append("")
+        
+        return "\n".join(prompt_parts).strip()
     
     @abstractmethod
     def get_system_prompt(self) -> str:

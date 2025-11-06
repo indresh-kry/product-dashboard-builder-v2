@@ -126,15 +126,26 @@ class LLMClient:
         
         try:
             # Use the v1+ SDK completions API
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            # o3/o1 models have specific requirements:
+            # - Use max_completion_tokens instead of max_tokens
+            # - Only support default temperature (1), cannot be customized
+            api_params = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
+            }
+            
+            # o3/o1 models use max_completion_tokens and only support temperature=1
+            if self.model.startswith('o3') or self.model.startswith('o1'):
+                api_params["max_completion_tokens"] = max_tokens
+                # o3/o1 models only support default temperature (1), don't pass custom values
+            else:
+                api_params["max_tokens"] = max_tokens
+                api_params["temperature"] = temperature
+            
+            response = self.client.chat.completions.create(**api_params)
             content = response.choices[0].message.content
             
             # Try to parse JSON response

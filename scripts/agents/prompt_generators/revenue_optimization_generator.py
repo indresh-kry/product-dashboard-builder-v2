@@ -10,7 +10,7 @@ Sends entire filtered dataset to LLM (not just first 5 rows).
 
 import json
 import pandas as pd
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .base_generator import BasePromptGenerator
 
 class RevenueOptimizationPromptGenerator(BasePromptGenerator):
@@ -19,65 +19,104 @@ class RevenueOptimizationPromptGenerator(BasePromptGenerator):
     def __init__(self):
         super().__init__("revenue_optimization")
     
-    def format_data_for_prompt(self, data: Dict[str, Any]) -> str:
-        """Format data for inclusion in prompts - sends ENTIRE dataset for revenue optimization data."""
-        if not data:
-            return "No data available for analysis."
-        
-        formatted_sections = []
-        
-        for key, value in data.items():
-            if key == 'summary':
-                continue
-                
-            if isinstance(value, pd.DataFrame):
-                # For revenue optimization data, send the ENTIRE dataset (not just head())
-                if len(value) > 0:
-                    formatted_sections.append(
-                        f"**{key.replace('_', ' ').title()}:**\n"
-                        f"Total rows: {len(value)}\n"
-                        f"Columns: {', '.join(value.columns)}\n"
-                        f"\n{value.to_string(index=False)}"
-                    )
-                else:
-                    formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\nNo data available.")
-            elif isinstance(value, dict):
-                formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\n{json.dumps(value, indent=2)}")
-            else:
-                formatted_sections.append(f"**{key.replace('_', ' ').title()}:**\n{str(value)}")
-        
-        return "\n\n".join(formatted_sections)
+    def format_data_for_prompt(self, data: Dict[str, Any], use_summaries: bool = True, max_rows: int = 100) -> str:
+        """Format data for inclusion in prompts with token optimization."""
+        return super().format_data_for_prompt(data, use_summaries=use_summaries, max_rows=max_rows)
     
-    def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any]) -> str:
-        """Generate prompt for revenue optimization analysis."""
+    def generate_prompt(self, data: Dict[str, Any], run_metadata: Dict[str, Any], charts_info: Optional[str] = None) -> str:
+        """Generate prompt for revenue optimization analysis with enhanced structure."""
         context = self.get_context_info(run_metadata)
+        few_shot_examples = self.get_few_shot_examples()
         
-        prompt = f"""
-# Revenue Optimization Analysis
+        cot_instructions = """
+ANALYSIS PROCESS (think step by step):
 
-**Context:** {context}
+STEP 1: Data Inspection & Chart Review
+- Review the provided charts to identify visual patterns and trends
+- What are the actual numbers? List top 3 metrics and their values
+- What are the trends visible in the charts? Increasing/decreasing/stable?
+- Are there visual anomalies in the charts? (e.g., "The revenue_by_date_trend.png chart shows a sharp spike on 2025-09-04")
+- Reference specific chart names when describing patterns (e.g., "The revenue_by_country_arpu.png chart reveals...")
 
-**Data Available:**
-{self.format_data_for_prompt(data)}
+STEP 2: Pattern Identification Using Charts
+- What patterns do you see in the charts? (Be specific: "The revenue_by_date_by_type_stacked.png chart shows revenue drops 40% on weekends" not "revenue varies")
+- Which segments/cohorts/regions perform differently in the charts? (List with numbers and chart references)
+- Is there any repeating or seasonal trends visible in the charts? (For example, "The revenue_by_date_trend.png chart shows daily active users spike on every Thursday")
+- Compare patterns across different charts (e.g., "Comparing revenue_by_country_top10.png with revenue_by_country_iap_vs_ad.png reveals...")
 
-**Analysis Instructions:**
-{self.get_analysis_instructions()}
+STEP 3: Root Cause Hypothesis with Chart Evidence
+- Why might these patterns exist? (Based on data AND chart observations, not assumptions)
+- What chart visualizations support your hypothesis? (Cite specific charts and what they show)
+- What data supports your hypothesis? (Cite specific rows/values)
 
-**Specific Focus Areas:**
-1. Revenue trends and patterns
-2. Optimization opportunities
-3. Revenue drivers
-4. Performance metrics
-5. Growth potential
+STEP 4: Recommendation Generation
+- WHO: Which specific segment/cohort/date? Include percentage or size
+- WHAT: What exact action? Use action verbs (implement, set up, test, launch)
+- WHEN: What specific timing? Include dates or day numbers (e.g., "day 3 post-install", "starting 2025-11-10")
+- EXPECTED OUTCOME: What metric changes? Include current and target values with numbers
+- TIMEFRAME: How long? Use days/weeks, not vague terms
+- EVIDENCE: Include at least 2 specific data points AND reference relevant charts (e.g., "As shown in revenue_by_type_arpu_by_segment.png, the whale segment has ARPU of $2.75")
 
-Please provide a comprehensive analysis of the revenue optimization data.
+STEP 5: Validation
+- Can this recommendation be executed next week? (If no, refine)
+- Does it include specific numbers/dates/percentages? (If no, add them)
+- Does it reference specific charts by name? (If no, add chart references)
+- Is it specific to THIS dataset? (If generic, discard)
+- Does it reference actual data points AND chart observations? (If no, discard)
 """
-        return prompt.strip()
+        
+        prompt_parts = ["# Revenue Optimization Analysis", f"\n**Context:** {context}"]
+        
+        # Add chart references if available
+        if charts_info:
+            prompt_parts.append(f"\n{charts_info}")
+        
+        if few_shot_examples:
+            prompt_parts.append(f"\n{few_shot_examples}")
+        prompt_parts.extend([
+            f"\n**Data Available:**",
+            f"{self.format_data_for_prompt(data, use_summaries=True, max_rows=100)}",
+            f"\n**Analysis Instructions:**",
+            f"{self.get_analysis_instructions()}",
+            f"\n{cot_instructions}",
+            f"\n**Specific Focus Areas (USE CHARTS TO SUPPORT YOUR ANALYSIS):**",
+            "1. Revenue trends and patterns (reference revenue_by_date_trend.png and revenue_by_date_by_type_stacked.png for visual patterns)",
+            "2. Optimization opportunities (use revenue_by_country_arpu.png and revenue_by_type_arpu_by_segment.png to identify high-value segments)",
+            "3. Revenue drivers (analyze revenue_by_country_mix.png and revenue_by_country_iap_vs_ad.png to understand revenue composition)",
+            "4. Performance metrics (compare revenue_by_date_revenue_vs_users.png to identify correlation patterns)",
+            "5. Growth potential (review revenue_by_cohort_date_curve.png for cohort-based revenue trends)",
+            "\n**IMPORTANT:** When making observations, explicitly reference the chart name (e.g., 'As shown in revenue_by_date_trend.png...') and describe what you see visually. Use charts to support your recommendations with visual evidence."
+        ])
+        return "\n".join(prompt_parts).strip()
     
     def get_system_prompt(self) -> str:
-        """Get system prompt for revenue optimization analysis."""
-        return """You are a data analyst specializing in revenue optimization analysis. Your role is to:
+        """Get system prompt for revenue optimization analysis with enhanced constraints."""
+        return """You are a product analytics consultant with 10+ years experience in mobile games and product analytics.
 
+CRITICAL CONSTRAINTS:
+- NEVER recommend: 'add features', 'improve UX', 'use ML/AI', 'implement strategies', 'deploy models' (too generic)
+- ALWAYS specify: WHAT metric, WHEN to measure, EXPECTED change, TIME frame
+- REQUIRED format: 'For [segment/date], [action] targeting [specific users] by [date] expecting [metric] change from [current] to [target] within [timeframe]'
+- DO NOT make recommendations for geographies with less than 100 daily users
+
+GOOD RECOMMENDATION EXAMPLE:
+'For high-engagement users (46.6% of base), implement a premium tier unlock prompt on day 3 post-install (when 67% reach level 5). Target ARPU increase from $0.15 to $0.35 within 30 days based on similar user conversion rates.'
+
+BAD RECOMMENDATION (DO NOT GENERATE):
+'Develop targeted upsell strategies for high engagement users' (too vague)
+
+OUTPUT REQUIREMENTS:
+1. Each recommendation MUST include:
+   - WHO: Specific user segment/cohort/date with percentage (e.g., "high-engagement users, 46.6% of base" or "cohort 2025-08-15")
+   - WHAT: Concrete action (e.g., "implement push notification campaign" not "improve engagement")
+   - WHEN: Specific timing (e.g., "on day 3 post-install" or "starting week of 2025-11-10")
+   - EXPECTED OUTCOME: Metric change with numbers (e.g., "ARPU increase from $0.15 to $0.35")
+   - TIMEFRAME: Specific duration (e.g., "within 30 days" not "next quarter")
+   - EVIDENCE: At least 2 specific data points from the provided data
+2. If data doesn't support a specific recommendation, state 'INSUFFICIENT DATA' rather than generic advice
+3. ALWAYS include specific numbers, percentages, dates, or metrics in every recommendation
+
+**Your Role:**
 1. **Analyze Revenue Patterns**: Identify patterns and trends in revenue data as well as different revenue types
 2. **Provide Insights**: Generate actionable insights for revenue optimization
 3. **Assess Performance**: Evaluate revenue performance and opportunities
@@ -123,13 +162,12 @@ Provide your analysis in the following JSON structure:
 ```
 
 **Key Requirements:**
-- DO NOT make recommendations for geographies with less than 100 daily users 
-- AVOID generic recommendations like "add new features" or "improve existing ones"
 - Focus on actionable insights with specific, measurable recommendations
-- Keep language of output simple and avoid jargon
-- Provide atleast 2 data points as evidence to support every finding
+- AVOID generic recommendations like "add new features" or "improve existing ones"
+- Provide at least 2 data points as evidence to support every finding
 - Include concrete numbers, dates, and measurable outcomes
 - Assess data quality with specific examples
 - Include confidence levels in metadata
 - Highlight any data limitations or concerns
-- Make recommendations specific to the actual data patterns observed"""
+- Make recommendations specific to the actual data patterns observed
+- Keep language simple and avoid jargon"""
